@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>fbognini.WebFramework.Swagger</PackageId>
+    <TargetFramework>net6.0</TargetFramework>
+    <Version>6.0.0</Version>
+    <Authors>Francesco Bognini</Authors>
+    <Company>Francesco Bognini</Company>
+    <PackageProjectUrl>https://github.com/fbognini/fbognini.WebFramework</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/fbognini/fbognini.WebFramework</RepositoryUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MicroElements.Swashbuckle.FluentValidation" Version="5.4.0" />
+    <PackageReference Include="Pluralize.NET" Version="1.0.2" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Filters" Version="7.0.2" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="6.2.3" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.2.3" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="6.2.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\fbognini.WebFramework\fbognini.WebFramework.csproj" />
+  </ItemGroup>
+
+</Project>

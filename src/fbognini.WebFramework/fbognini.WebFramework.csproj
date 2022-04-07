@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>fbognini.WebFramework</PackageId>
+    <TargetFramework>net6.0</TargetFramework>
+    <Version>6.0.0</Version>
+    <Authors>Francesco Bognini</Authors>
+    <Company>Francesco Bognini</Company>
+    <PackageProjectUrl>https://github.com/fbognini/fbognini.WebFramework</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/fbognini/fbognini.WebFramework</RepositoryUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="fbognini.Infrastructure" Version="6.0.0" />
+    
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="6.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="5.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.ViewFeatures" Version="2.2.0" />
+    <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="2.2.0" />
+    <PackageReference Include="System.Text.Json" Version="6.0.1" />
+    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+  </ItemGroup>
+
+
+</Project>
