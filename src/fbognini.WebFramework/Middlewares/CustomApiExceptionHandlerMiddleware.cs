@@ -45,7 +45,7 @@ namespace fbognini.WebFramework.Middlewares
 
         public async Task Invoke(HttpContext context)
         {
-            Dictionary<string, string[]> validations = new Dictionary<string, string[]>();
+            Dictionary<string, string[]> validations = null;
             string message = null;
             object additionalData = null;
             HttpStatusCode httpStatusCode = HttpStatusCode.InternalServerError;
