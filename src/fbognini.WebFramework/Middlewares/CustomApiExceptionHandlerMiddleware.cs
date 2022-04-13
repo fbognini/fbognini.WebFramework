@@ -54,39 +54,11 @@ namespace fbognini.WebFramework.Middlewares
             {
                 await next(context);
             }
-            catch (ServiceUnavailableException exception)
-            {
-                httpStatusCode = exception.HttpStatusCode;
-                message = exception.Message;
-
-                await WriteToResponseAsync();
-            }
             catch (AppException exception)
             {
                 httpStatusCode = exception.HttpStatusCode;
                 additionalData = exception.AdditionalData;
-
-                if (env.IsDevelopment())
-                {
-                    var dic = new Dictionary<string, string>
-                    {
-                        ["Exception"] = exception.Message,
-                        ["StackTrace"] = exception.StackTrace,
-                    };
-                    if (exception.InnerException != null)
-                    {
-                        dic.Add("InnerException.Exception", exception.InnerException.Message);
-                        dic.Add("InnerException.StackTrace", exception.InnerException.StackTrace);
-                    }
-                    if (exception.AdditionalData != null)
-                        dic.Add("AdditionalData", jsonSerializer.Serialize(exception.AdditionalData));
-
-                    message = jsonSerializer.Serialize(dic);
-                }
-                else
-                {
-                    message = exception.Message;
-                }
+                message = exception.Message;
 
                 await WriteToResponseAsync();
             }
@@ -115,7 +87,13 @@ namespace fbognini.WebFramework.Middlewares
                     {
                         ["Exception"] = exception.Message,
                         ["StackTrace"] = exception.StackTrace,
-                    };
+                    }; 
+
+                    if (exception.InnerException != null)
+                    {
+                        dic.Add("InnerException.Exception", exception.InnerException.Message);
+                        dic.Add("InnerException.StackTrace", exception.InnerException.StackTrace);
+                    }
                     message = jsonSerializer.Serialize(dic);
                 }
                 else

@@ -30,11 +30,10 @@ namespace fbognini.WebFramework.Filters
             }
             else if (context.Result is BadRequestObjectResult badRequestObjectResult)
             {
-                var message = badRequestObjectResult.Value.ToString();
                 if (badRequestObjectResult.Value is SerializableError errors)
                 {
                     var errorMessages = errors.SelectMany(p => (string[])p.Value).Distinct();
-                    message = string.Join(" | ", errorMessages);
+                    var message = string.Join(" | ", errorMessages);
 
                     var apiResult = new ApiResult(false, HttpStatusCode.BadRequest, message);
                     context.Result = new JsonResult(apiResult) { StatusCode = badRequestObjectResult.StatusCode };
@@ -42,7 +41,7 @@ namespace fbognini.WebFramework.Filters
 
                 if (badRequestObjectResult.Value is ValidationProblemDetails problems)
                 {
-                    var apiResult = new ApiResult(false, HttpStatusCode.BadRequest, message, problems.Errors);
+                    var apiResult = new ApiResult(false, HttpStatusCode.BadRequest, null, problems.Errors);
                     context.Result = new JsonResult(apiResult) { StatusCode = badRequestObjectResult.StatusCode };
                 }
             }

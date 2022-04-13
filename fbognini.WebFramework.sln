@@ -7,8 +7,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{547D7BF4-AC5
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "fbognini.WebFramework", "src\fbognini.WebFramework\fbognini.WebFramework.csproj", "{EA866B46-76A7-4BA9-B657-CAFA2441F025}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "fbognini.WebFramework.Swagger", "src\fbognini.WebFramework.Swagger\fbognini.WebFramework.Swagger.csproj", "{8AB91C32-940C-44CD-A508-83CB1CC71A2F}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -19,17 +17,12 @@ Global
 		{EA866B46-76A7-4BA9-B657-CAFA2441F025}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EA866B46-76A7-4BA9-B657-CAFA2441F025}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EA866B46-76A7-4BA9-B657-CAFA2441F025}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8AB91C32-940C-44CD-A508-83CB1CC71A2F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8AB91C32-940C-44CD-A508-83CB1CC71A2F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8AB91C32-940C-44CD-A508-83CB1CC71A2F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8AB91C32-940C-44CD-A508-83CB1CC71A2F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{EA866B46-76A7-4BA9-B657-CAFA2441F025} = {547D7BF4-AC56-4318-B74E-B68310C99BC5}
-		{8AB91C32-940C-44CD-A508-83CB1CC71A2F} = {547D7BF4-AC56-4318-B74E-B68310C99BC5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {28155624-3D36-46E5-9B85-65371DDE1C87}
