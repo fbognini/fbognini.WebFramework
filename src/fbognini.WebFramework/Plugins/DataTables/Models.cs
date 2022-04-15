@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using fbognini.Core.Data.Pagination;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace fbognini.WebFramework.Plugins.DataTables
@@ -10,7 +11,30 @@ namespace fbognini.WebFramework.Plugins.DataTables
     /// </summary>
     /// <typeparam name="T">The data type of each row.</typeparam>
     public class DtResult<T>
+        where T : class
     {
+        public DtResult()
+        {
+
+        }
+        public DtResult(DtParameters parameters, PaginationResponse<T> response) 
+        {
+            Draw = parameters.Draw;
+            if (response.Pagination != null)
+            {
+                RecordsTotal = (int)response.Pagination.Total;
+                RecordsFiltered = (int)response.Pagination.Total;
+            }
+            else
+            {
+                RecordsTotal = response.Response.Count;
+                RecordsFiltered = response.Response.Count;
+            }
+
+            Data = response.Response;
+        }
+
+
         /// <summary>
         /// The draw counter that this object is a response to - from the draw parameter sent as part of the data request.
         /// Note that it is strongly recommended for security reasons that you cast this parameter to an integer, rather than simply echoing back to the client what it sent in the draw parameter, in order to prevent Cross Site Scripting (XSS) attacks.

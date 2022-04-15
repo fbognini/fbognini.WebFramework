@@ -3,7 +3,7 @@
   <PropertyGroup>
     <PackageId>fbognini.WebFramework</PackageId>
     <TargetFramework>net6.0</TargetFramework>
-    <Version>6.0.2</Version>
+    <Version>6.0.3</Version>
     <Authors>Francesco Bognini</Authors>
     <Company>Francesco Bognini</Company>
     <PackageProjectUrl>https://github.com/fbognini/fbognini.WebFramework</PackageProjectUrl>
@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!--<PackageReference Include="fbognini.Infrastructure" Version="6.0.0" />-->
+    <PackageReference Include="fbognini.Infrastructure" Version="6.0.2" />
     
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="6.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="5.0.0" />
@@ -24,10 +24,5 @@
     <PackageReference Include="ZymLabs.NSwag.FluentValidation.AspNetCore" Version="0.5.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.3" />
   </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\fbognini.Core\src\fbognini.Infrastructure\fbognini.Infrastructure.csproj" />
-  </ItemGroup>
-
 
 </Project>
