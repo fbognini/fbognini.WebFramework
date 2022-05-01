@@ -15,6 +15,7 @@ using fbognini.WebFramework.Api;
 using System.IO;
 using Microsoft.IdentityModel.Tokens;
 using fbognini.Core.Interfaces;
+using fbognini.FluentValidation.Exceptions;
 
 namespace fbognini.WebFramework.Middlewares
 {

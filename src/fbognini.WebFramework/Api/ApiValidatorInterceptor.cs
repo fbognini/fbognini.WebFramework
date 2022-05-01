@@ -3,7 +3,7 @@ using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using System.Linq;  
-using ValidationException = fbognini.Core.Exceptions.ValidationException;
+using ValidationException = fbognini.FluentValidation.Exceptions.ValidationException;
 using ValidationResult = FluentValidation.Results.ValidationResult;
 
 namespace fbognini.WebFramework
@@ -23,7 +23,7 @@ namespace fbognini.WebFramework
             return validationContext;
         }
 
-        public ValidationResult AfterMvcValidation(ControllerContext controllerContext, IValidationContext validationContext, FluentValidation.Results.ValidationResult result)
+        public ValidationResult AfterMvcValidation(ControllerContext controllerContext, IValidationContext validationContext, ValidationResult result)
         {
             var failures = result.Errors
                 .Where(f => f != null)
