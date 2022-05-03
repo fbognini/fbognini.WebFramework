@@ -156,8 +156,7 @@ namespace fbognini.WebFramework.Plugins.DataTables
         /// Custom column that is used to further sort on the first Order column.
         /// </summary>
         public string SortOrder => Columns != null && Order != null && Order.Length > 0
-            ? (Columns[Order[0].Column].Data +
-               (Order[0].Dir == DtOrderDir.Desc ? " " + Order[0].Dir : string.Empty))
+            ? (Columns[Order[0].Column].Data + (Order[0].Dir == DtOrderDir.DESC ? " " + Order[0].Dir : string.Empty))
             : null;
 
         /// <summary>
@@ -221,16 +220,7 @@ namespace fbognini.WebFramework.Plugins.DataTables
         /// It will be dt-string asc or dt-string desc to indicate ascending ordering or descending ordering, respectively.
         /// </summary>
         [JsonPropertyName("dir")]
-        public DtOrderDir Dir { get; set; }
-    }
-
-    /// <summary>
-    /// Sort orders of jQuery DataTables.
-    /// </summary>
-    public enum DtOrderDir
-    {
-        Asc,
-        Desc
+        public string Dir { get; set; }
     }
 
     /// <summary>
