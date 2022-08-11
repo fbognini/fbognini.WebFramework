@@ -26,6 +26,7 @@ namespace fbognini.WebFramework.SidebarMenu
         public string Text { get; set; }
         public string Icon { get; set; }
         public string Label { get; set; }
+        public string Area { get; set; }
         public string Controller { get; set; }
         public List<string> Controllers => Controller.Split(',', StringSplitOptions.TrimEntries).ToList();
         public List<SidebarMenuSubItem> Children { get; set; }

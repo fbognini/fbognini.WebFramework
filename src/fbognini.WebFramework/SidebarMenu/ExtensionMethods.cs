@@ -15,8 +15,12 @@ namespace fbognini.WebFramework.SidebarMenu
 
     public static class ExtensionMethods
     {
-        public static SidebarMenu LoadSidebarMenu(this IServiceProvider provider, IConfiguration configuration, string controllerNamespace)
+        public static SidebarMenu LoadSidebarMenu(this IServiceProvider provider, IConfiguration configuration, string baseNamespace)
         {
+            var controllerNamespace = $"{baseNamespace}.Controllers";
+            var areaNamespace = $"{baseNamespace}.Areas";
+
+
             var sidebarMenu = configuration.GetSection("sidebarMenu").GetChildren().ToArray();
 
             var groups = configuration.GetSection("sidebarMenu").Get<List<SidebarMenuGroup>>();
@@ -26,8 +30,12 @@ namespace fbognini.WebFramework.SidebarMenu
                 {
                     foreach (var action in groupChild.Children)
                     {
+                        var typeNamespace = string.IsNullOrWhiteSpace(action.Area)
+                            ? $"{controllerNamespace}.{action.Controller}Controller"
+                            : $"{areaNamespace}.{action.Area}.{action.Controller}Controller";
+
                         var controller = AppDomain.CurrentDomain.GetAssemblies()
-                            .Select(assembly => assembly.GetType($"{controllerNamespace}.{action.Controller}Controller")).FirstOrDefault(t => t != null);
+                            .Select(assembly => assembly.GetType(typeNamespace)).FirstOrDefault(t => t != null);
 
                         if (controller == null)
                         {
@@ -83,6 +91,6 @@ namespace fbognini.WebFramework.SidebarMenu
 
                 return (isAnd, policys, roles);
             }
-        }        
+        }
     }
 }
