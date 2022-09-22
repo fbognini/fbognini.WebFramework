@@ -16,6 +16,7 @@ using System.IO;
 using Microsoft.IdentityModel.Tokens;
 using fbognini.Core.Interfaces;
 using fbognini.FluentValidation.Exceptions;
+using System.Text.Json;
 
 namespace fbognini.WebFramework.Middlewares
 {
@@ -31,17 +32,15 @@ namespace fbognini.WebFramework.Middlewares
     {
         private readonly RequestDelegate next;
         private readonly IWebHostEnvironment env;
-        private readonly ISerializerService jsonSerializer;
         private readonly ILogger<CustomApiExceptionHandlerMiddleware> logger;
 
         public CustomApiExceptionHandlerMiddleware(RequestDelegate next,
             IWebHostEnvironment env,
-            ILogger<CustomApiExceptionHandlerMiddleware> logger, ISerializerService jsonSerializer)
+            ILogger<CustomApiExceptionHandlerMiddleware> logger)
         {
             this.next = next;
             this.env = env;
             this.logger = logger;
-            this.jsonSerializer = jsonSerializer;
         }
 
         public async Task Invoke(HttpContext context)
@@ -95,7 +94,7 @@ namespace fbognini.WebFramework.Middlewares
                         dic.Add("InnerException.Exception", exception.InnerException.Message);
                         dic.Add("InnerException.StackTrace", exception.InnerException.StackTrace);
                     }
-                    message = jsonSerializer.Serialize(dic);
+                    message = JsonSerializer.Serialize(dic);
                 }
                 else
                 {
@@ -126,7 +125,7 @@ namespace fbognini.WebFramework.Middlewares
                     throw new InvalidOperationException("The response has already started, the http status code middleware will not be executed.");
 
                 var result = new ApiResult(false, httpStatusCode, message, validations, additionalData);
-                var json = jsonSerializer.Serialize (result);
+                var json = JsonSerializer.Serialize(result);
 
                 context.Response.StatusCode = (int)httpStatusCode;
                 context.Response.ContentType = "application/json";
@@ -147,7 +146,7 @@ namespace fbognini.WebFramework.Middlewares
                     //if (exception is SecurityTokenExpiredException tokenException)
                     //    dic.Add("Expires", tokenException.Expires.ToString());
 
-                    message = jsonSerializer.Serialize(dic);
+                    message = JsonSerializer.Serialize(dic);
                 }
                 else
                 {

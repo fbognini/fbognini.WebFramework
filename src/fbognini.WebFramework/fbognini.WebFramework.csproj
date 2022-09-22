@@ -3,7 +3,7 @@
   <PropertyGroup>
     <PackageId>fbognini.WebFramework</PackageId>
     <TargetFramework>net6.0</TargetFramework>
-    <Version>6.0.6</Version>
+    <Version>6.1.0</Version>
     <Authors>Francesco Bognini</Authors>
     <Company>Francesco Bognini</Company>
     <PackageProjectUrl>https://github.com/fbognini/fbognini.WebFramework</PackageProjectUrl>
@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="fbognini.Infrastructure" Version="6.0.5" />
+    <PackageReference Include="fbognini.Infrastructure" Version="6.5.2" />
     
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="6.0.4" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="5.0.0" />
