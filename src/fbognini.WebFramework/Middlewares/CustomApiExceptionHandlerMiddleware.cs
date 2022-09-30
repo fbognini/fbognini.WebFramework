@@ -17,6 +17,7 @@ using Microsoft.IdentityModel.Tokens;
 using fbognini.Core.Interfaces;
 using fbognini.FluentValidation.Exceptions;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace fbognini.WebFramework.Middlewares
 {
@@ -30,25 +31,34 @@ namespace fbognini.WebFramework.Middlewares
 
     public class CustomApiExceptionHandlerMiddleware
     {
+        public static List<Type> HandledException = new()
+        {
+            typeof(AppException),
+            typeof(ValidationException),
+            typeof(SecurityTokenExpiredException),
+            typeof(UnauthorizedAccessException),
+        };
+
         private readonly RequestDelegate next;
         private readonly IWebHostEnvironment env;
-        private readonly ICurrentUserService currentUserService;
         private readonly ILogger<CustomApiExceptionHandlerMiddleware> logger;
+
+        private ICurrentUserService currentUserService;
 
         public CustomApiExceptionHandlerMiddleware(
             RequestDelegate next,
             IWebHostEnvironment env,
-            ICurrentUserService currentUserService,
             ILogger<CustomApiExceptionHandlerMiddleware> logger)
         {
             this.next = next;
             this.env = env;
-            this.currentUserService = currentUserService;
             this.logger = logger;
         }
 
         public async Task Invoke(HttpContext context)
         {
+            currentUserService = context.RequestServices.GetRequiredService<ICurrentUserService>();
+
             Dictionary<string, string[]> validations = null;
             string message = null;
             object additionalData = null;
