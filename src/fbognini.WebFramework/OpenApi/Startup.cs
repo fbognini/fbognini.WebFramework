@@ -17,80 +17,93 @@ public static class Startup
     public static IServiceCollection AddOpenApiDocumentation(this IServiceCollection services, IConfiguration config)
     {
         var settings = config.GetSection(nameof(SwaggerSettings)).Get<SwaggerSettings>();
-        if (settings.Enable)
+        if (!settings.Enable)
         {
-            services.AddVersionedApiExplorer(o => o.SubstituteApiVersionInUrl = true);
-            services.AddEndpointsApiExplorer();
-            services.AddOpenApiDocument((document, serviceProvider) =>
+            return services;
+        }
+
+        services.AddVersionedApiExplorer(o => o.SubstituteApiVersionInUrl = true);
+        services.AddEndpointsApiExplorer();
+        services.AddOpenApiDocument((document, serviceProvider) =>
+        {
+            document.PostProcess = doc =>
             {
-                document.PostProcess = doc =>
+                doc.Info.Title = settings.Title;
+                doc.Info.Version = settings.Version;
+                doc.Info.Description = settings.Description;
+                doc.Info.Contact = new()
                 {
-                    doc.Info.Title = settings.Title;
-                    doc.Info.Version = settings.Version;
-                    doc.Info.Description = settings.Description;
-                    doc.Info.Contact = new()
-                    {
-                        Name = settings.ContactName,
-                        Email = settings.ContactEmail,
-                        Url = settings.ContactUrl
-                    };
-                    doc.Info.License = new()
-                    {
-                        Name = settings.LicenseName,
-                        Url = settings.LicenseUrl
-                    };
+                    Name = settings.ContactName,
+                    Email = settings.ContactEmail,
+                    Url = settings.ContactUrl
                 };
-
-                //if (config["SecuritySettings:Provider"].Equals("AzureAd", StringComparison.OrdinalIgnoreCase))
-                //{
-                //    document.AddSecurity(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
-                //    {
-                //        Type = OpenApiSecuritySchemeType.OAuth2,
-                //        Flow = OpenApiOAuth2Flow.AccessCode,
-                //        Description = "OAuth2.0 Auth Code with PKCE",
-                //        Flows = new()
-                //        {
-                //            AuthorizationCode = new()
-                //            {
-                //                AuthorizationUrl = config["SecuritySettings:Swagger:AuthorizationUrl"],
-                //                TokenUrl = config["SecuritySettings:Swagger:TokenUrl"],
-                //                Scopes = new Dictionary<string, string>
-                //                {
-                //                    { config["SecuritySettings:Swagger:ApiScope"], "access the api" }
-                //                }
-                //            }
-                //        }
-                //    });
-                //}
-                //else
-                //{
-                    document.AddSecurity(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
-                    {
-                        Name = "Authorization",
-                        Description = "Input your Bearer token to access this API",
-                        In = OpenApiSecurityApiKeyLocation.Header,
-                        Type = OpenApiSecuritySchemeType.Http,
-                        Scheme = JwtBearerDefaults.AuthenticationScheme,
-                        BearerFormat = "JWT",
-                    });
-                //}
-
-                document.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor());
-                //document.OperationProcessors.Add(new SwaggerGlobalAuthProcessor());
-
-                document.TypeMappers.Add(new PrimitiveTypeMapper(typeof(TimeSpan), schema =>
+                doc.Info.License = new()
                 {
-                    schema.Type = NJsonSchema.JsonObjectType.String;
-                    schema.IsNullableRaw = true;
-                    schema.Pattern = @"^([0-9]{1}|(?:0[0-9]|1[0-9]|2[0-3])+):([0-5]?[0-9])(?::([0-5]?[0-9])(?:.(\d{1,9}))?)?$";
-                    schema.Example = "02:00:00";
-                }));
+                    Name = settings.LicenseName,
+                    Url = settings.LicenseUrl
+                };
+            };
 
-                document.OperationProcessors.Add(new SwaggerHeaderAttributeProcessor());
-
-                var fluentValidationSchemaProcessor = serviceProvider.CreateScope().ServiceProvider.GetService<FluentValidationSchemaProcessor>();
-                document.SchemaProcessors.Add(fluentValidationSchemaProcessor);
+            //if (config["SecuritySettings:Provider"].Equals("AzureAd", StringComparison.OrdinalIgnoreCase))
+            //{
+            //    document.AddSecurity(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
+            //    {
+            //        Type = OpenApiSecuritySchemeType.OAuth2,
+            //        Flow = OpenApiOAuth2Flow.AccessCode,
+            //        Description = "OAuth2.0 Auth Code with PKCE",
+            //        Flows = new()
+            //        {
+            //            AuthorizationCode = new()
+            //            {
+            //                AuthorizationUrl = config["SecuritySettings:Swagger:AuthorizationUrl"],
+            //                TokenUrl = config["SecuritySettings:Swagger:TokenUrl"],
+            //                Scopes = new Dictionary<string, string>
+            //                {
+            //                    { config["SecuritySettings:Swagger:ApiScope"], "access the api" }
+            //                }
+            //            }
+            //        }
+            //    });
+            //}
+            //else
+            //{
+            document.AddSecurity(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
+            {
+                Name = "Authorization",
+                Description = "Input your Bearer token to access this API",
+                In = OpenApiSecurityApiKeyLocation.Header,
+                Type = OpenApiSecuritySchemeType.Http,
+                Scheme = JwtBearerDefaults.AuthenticationScheme,
+                BearerFormat = "JWT",
             });
+            //}
+
+            document.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor());
+            //document.OperationProcessors.Add(new SwaggerGlobalAuthProcessor());
+
+            document.TypeMappers.Add(new PrimitiveTypeMapper(typeof(TimeSpan), schema =>
+            {
+                schema.Type = NJsonSchema.JsonObjectType.String;
+                schema.IsNullableRaw = true;
+                schema.Pattern = @"^([0-9]{1}|(?:0[0-9]|1[0-9]|2[0-3])+):([0-5]?[0-9])(?::([0-5]?[0-9])(?:.(\d{1,9}))?)?$";
+                schema.Example = "02:00:00";
+            }));
+
+            document.OperationProcessors.Add(new SwaggerHeaderAttributeProcessor());
+
+            if (settings.UseFluentValidation)
+            {
+                var fluentValidationSchemaProcessor = 
+                    serviceProvider.CreateScope()
+                        .ServiceProvider
+                        .GetRequiredService<FluentValidationSchemaProcessor>();
+
+                document.SchemaProcessors.Add(fluentValidationSchemaProcessor);
+            }
+        });
+
+        if (settings.UseFluentValidation)
+        {
             services.AddScoped<FluentValidationSchemaProcessor>();
         }
 
@@ -100,27 +113,29 @@ public static class Startup
     public static IApplicationBuilder UseOpenApiDocumentation(this IApplicationBuilder app, IConfiguration config)
     {
         var settings = config.GetSection(nameof(SwaggerSettings)).Get<SwaggerSettings>();
-        if (settings.Enable)
+        if (!settings.Enable)
         {
-            app.UseOpenApi();
-            app.UseSwaggerUi3(options =>
-            {
-                options.DefaultModelsExpandDepth = -1;
-                options.DocExpansion = "none";
-                options.TagsSorter = "alpha";
-                //if (config["SecuritySettings:Provider"].Equals("AzureAd", StringComparison.OrdinalIgnoreCase))
-                //{
-                //    options.OAuth2Client = new OAuth2ClientSettings
-                //    {
-                //        AppName = "Full Stack Hero Api Client",
-                //        ClientId = config["SecuritySettings:Swagger:OpenIdClientId"],
-                //        UsePkceWithAuthorizationCodeGrant = true,
-                //        ScopeSeparator = " "
-                //    };
-                //    options.OAuth2Client.Scopes.Add(config["SecuritySettings:Swagger:ApiScope"]);
-                //}
-            });
+            return app;
         }
+
+        app.UseOpenApi();
+        app.UseSwaggerUi3(options =>
+        {
+            options.DefaultModelsExpandDepth = -1;
+            options.DocExpansion = "none";
+            options.TagsSorter = "alpha";
+            //if (config["SecuritySettings:Provider"].Equals("AzureAd", StringComparison.OrdinalIgnoreCase))
+            //{
+            //    options.OAuth2Client = new OAuth2ClientSettings
+            //    {
+            //        AppName = "Full Stack Hero Api Client",
+            //        ClientId = config["SecuritySettings:Swagger:OpenIdClientId"],
+            //        UsePkceWithAuthorizationCodeGrant = true,
+            //        ScopeSeparator = " "
+            //    };
+            //    options.OAuth2Client.Scopes.Add(config["SecuritySettings:Swagger:ApiScope"]);
+            //}
+        });
 
         return app;
     }
