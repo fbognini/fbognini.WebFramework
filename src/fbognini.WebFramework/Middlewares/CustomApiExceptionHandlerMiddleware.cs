@@ -32,14 +32,18 @@ namespace fbognini.WebFramework.Middlewares
     {
         private readonly RequestDelegate next;
         private readonly IWebHostEnvironment env;
+        private readonly ICurrentUserService currentUserService;
         private readonly ILogger<CustomApiExceptionHandlerMiddleware> logger;
 
-        public CustomApiExceptionHandlerMiddleware(RequestDelegate next,
+        public CustomApiExceptionHandlerMiddleware(
+            RequestDelegate next,
             IWebHostEnvironment env,
+            ICurrentUserService currentUserService,
             ILogger<CustomApiExceptionHandlerMiddleware> logger)
         {
             this.next = next;
             this.env = env;
+            this.currentUserService = currentUserService;
             this.logger = logger;
         }
 
@@ -83,37 +87,11 @@ namespace fbognini.WebFramework.Middlewares
             {
                 if (env.IsDevelopment())
                 {
-                    var dic = new Dictionary<string, string>
-                    {
-                        ["Exception"] = exception.Message,
-                        ["StackTrace"] = exception.StackTrace,
-                    }; 
-
-                    if (exception.InnerException != null)
-                    {
-                        dic.Add("InnerException.Exception", exception.InnerException.Message);
-                        dic.Add("InnerException.StackTrace", exception.InnerException.StackTrace);
-                    }
-                    message = JsonSerializer.Serialize(dic);
+                    SetExceptionMessage(exception);
                 }
                 else
                 {
-
-
-                    var additional = new Dictionary<string, object>
-                    {
-                        ["CustomerId"] = 12345,
-                        ["OrderId"] = 54
-                    };
-
-                    //if ()
-
-                    using (logger.BeginScope(additional))
-                    {
-                        logger.LogError(exception, "exception {Message} during request {Path}", exception.Message, context.Request.Path);
-                    }
-
-
+                    logger.LogError(exception, "Generic exception {message} for user {user} during request {path}", exception.Message, currentUserService.UserId, context.Request.Path);
                 }
 
                 await WriteToResponseAsync();
@@ -138,20 +116,33 @@ namespace fbognini.WebFramework.Middlewares
 
                 if (env.IsDevelopment())
                 {
-                    var dic = new Dictionary<string, string>
-                    {
-                        ["Exception"] = exception.Message,
-                        ["StackTrace"] = exception.StackTrace
-                    };
-                    //if (exception is SecurityTokenExpiredException tokenException)
-                    //    dic.Add("Expires", tokenException.Expires.ToString());
-
-                    message = JsonSerializer.Serialize(dic);
+                    SetExceptionMessage(exception);
                 }
                 else
                 {
                     message = exception.Message;
                 }
+
+            }
+
+            void SetExceptionMessage(Exception exception)
+            {
+                var dic = new Dictionary<string, string>
+                {
+                    ["Exception"] = exception.Message,
+                    ["StackTrace"] = exception.StackTrace
+                };
+
+                if (exception.InnerException != null)
+                {
+                    dic.Add("InnerException.Exception", exception.InnerException.Message);
+                    dic.Add("InnerException.StackTrace", exception.InnerException.StackTrace);
+                }
+
+                if (exception is SecurityTokenExpiredException tokenException)
+                    dic.Add("Expires", tokenException.Expires.ToString());
+
+                message = JsonSerializer.Serialize(dic);
             }
         }
     }
