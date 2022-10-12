@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace fbognini.WebFramework
 {
@@ -7,21 +7,19 @@ namespace fbognini.WebFramework
     {
         public static void Set<T>(this ITempDataDictionary tempData, string key, T value)
         {
-            string json = JsonConvert.SerializeObject(value);
-
             if (tempData.ContainsKey(key))
                 tempData.Remove(key);
 
-            tempData.Add(key, json);
+            tempData.Add(key, JsonSerializer.Serialize(value));
         }
 
         public static T Get<T>(this ITempDataDictionary tempData, string key)
         {
-            if (!tempData.ContainsKey(key)) return default(T);
+            if (!tempData.ContainsKey(key)) return default;
 
             var value = tempData[key] as string;
 
-            return value == null ? default(T) : JsonConvert.DeserializeObject<T>(value);
+            return value == null ? default : JsonSerializer.Deserialize<T>(value);
         }
     }
 }

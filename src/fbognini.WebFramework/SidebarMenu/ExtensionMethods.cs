@@ -8,10 +8,6 @@ using System.Reflection;
 
 namespace fbognini.WebFramework.SidebarMenu
 {
-    public class SidebarMenu
-    {
-        public List<SidebarMenuGroup> Groups { get; set; }
-    }
 
     public static class ExtensionMethods
     {
@@ -20,10 +16,7 @@ namespace fbognini.WebFramework.SidebarMenu
             var controllerNamespace = $"{baseNamespace}.Controllers";
             var areaNamespace = $"{baseNamespace}.Areas";
 
-
-            var sidebarMenu = configuration.GetSection("sidebarMenu").GetChildren().ToArray();
-
-            var groups = configuration.GetSection("sidebarMenu").Get<List<SidebarMenuGroup>>();
+            var groups = configuration.GetSection(nameof(SidebarMenu)).Get<List<SidebarMenuGroup>>();
             foreach (var group in groups)
             {
                 foreach (var groupChild in group.Children)
