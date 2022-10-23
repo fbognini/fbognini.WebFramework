@@ -59,6 +59,7 @@ namespace fbognini.WebFramework.Logging
             logger
                 .WriteTo
                     .Logger(lc => lc.Filter.ByIncludingOnly(Matching.FromSource(typeof(RequestResponseLoggingMiddleware).FullName))
+                                    .Filter.ByIncludingOnly(Matching.WithProperty(RequestResponseLoggingMiddleware.ApiLoggingProperty))
                     .WriteTo
                         .MSSqlServer(
                             connectionstring,
