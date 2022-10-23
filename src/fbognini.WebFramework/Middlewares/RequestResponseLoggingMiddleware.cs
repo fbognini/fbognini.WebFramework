@@ -1,204 +1,169 @@
-﻿using fbognini.WebFramework.Filters;
+﻿using fbognini.Core.Interfaces;
+using fbognini.WebFramework.Filters;
+using fbognini.WebFramework.Logging;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.IO;
 using Microsoft.Net.Http.Headers;
-using Newtonsoft.Json;
+using Serilog;
+using Serilog.Context;
+using Serilog.Filters;
+using Serilog.Sinks.MSSqlServer;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Security.Claims;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Web;
 
 namespace fbognini.WebFramework.Middlewares
 {
-    public class AdditionalParameter
+    internal class RequestResponseLoggingMiddleware
     {
-        public AdditionalParameter(string queryParameter, bool isMandatory = false)
-        {
-            QueryParameter = queryParameter;
-            IsMandatory = isMandatory;
-        }
-
-        public string QueryParameter { get; set; }
-        public bool IsMandatory { get; set; }
-
-        public string Value { get; private set; }
-        public void SetValue(string value)
-        {
-            Value = value;
-        }
-    }
-
-    public class RequestResponseLoggingMiddleware
-    {
-        private readonly string connectionString;
-        private readonly string schema;
-        private readonly List<AdditionalParameter> additionalParameters;
-        private readonly RequestDelegate next;
         private readonly RecyclableMemoryStreamManager recyclableMemoryStreamManager;
+        private readonly RequestDelegate next;
+        private readonly IEnumerable<RequestAdditionalParameter> AdditionalParameters;
 
-        public RequestResponseLoggingMiddleware(RequestDelegate next, string connectionString, string schema, List<AdditionalParameter> additionalParameters = null)
+        public RequestResponseLoggingMiddleware(RequestDelegate next, IEnumerable<RequestAdditionalParameter> additionalParameters = null)
         {
-            this.next = next;
             recyclableMemoryStreamManager = new RecyclableMemoryStreamManager();
-            this.connectionString = connectionString;
-            this.schema = schema;
-            this.additionalParameters = additionalParameters ?? new List<AdditionalParameter>();
+            this.next = next;
+            this.AdditionalParameters = additionalParameters ?? new List<RequestAdditionalParameter>();
         }
 
         public async Task Invoke(HttpContext context)
         {
-            int id = await LogRequest(context);
-            if (id == -1)
+            var endpoint = context
+                .GetEndpoint();
+
+            if (endpoint == null)
             {
                 await next(context);
                 return;
             }
 
+            var controllerActionDescriptor = endpoint
+                .Metadata
+                .GetMetadata<ControllerActionDescriptor>();
+
+            var controller = controllerActionDescriptor.ControllerName;
+            var action = controllerActionDescriptor.ActionName;
+
+            if (string.IsNullOrWhiteSpace(controller) || string.IsNullOrWhiteSpace(action))
+            {
+                await next(context);
+                return;
+            }
+
+            var propertys = new Dictionary<string, object>();
+
+
+            var logger = context.RequestServices.GetRequiredService<ILogger<RequestResponseLoggingMiddleware>>();
+
+            foreach (var parameter in AdditionalParameters)
+            {
+                var value = GetValue();
+                if (value == null && !parameter.SqlColumn.AllowNull)
+                {
+                    await next(context);
+                    return;
+                }
+
+                propertys.Add(parameter.Parameter, value);
+
+                string GetValue()
+                {
+                    if (parameter.Type == RequestAdditionalParameterType.Query)
+                    {
+                        return context.Request.Query.ContainsKey(parameter.Parameter) ? context.Request.Query[parameter.Parameter].ToString() : default;
+                    }
+
+                    return context.Request.Headers.ContainsKey(parameter.Parameter) ? context.Request.Headers[parameter.Parameter].ToString() : default;
+                }
+            }
+
+            var requestDate = DateTime.UtcNow;
+            var currentUserService = context.RequestServices.GetRequiredService<ICurrentUserService>();
+
+            context.Request.EnableBuffering();
+
+            string request = await GetRequest(context);
+
             context.Request.Body.Position = 0;
 
-            var original = context.Response.Body;
+            var originalResponseBody = context.Response.Body;
 
             await using var responseBody = recyclableMemoryStreamManager.GetStream();
             context.Response.Body = responseBody;
 
             await next(context);
 
+            var responseDate = DateTime.UtcNow;
+            var elapsedMilliseconds = (responseDate - requestDate).Milliseconds;
+
             context.Response.Body.Seek(0, SeekOrigin.Begin);
-            var status = context.Response.StatusCode;
-            var text = await new StreamReader(context.Response.Body).ReadToEndAsync();
+            var response = await new StreamReader(context.Response.Body).ReadToEndAsync();
             context.Response.Body.Seek(0, SeekOrigin.Begin);
 
-            using SqlConnection connection = new SqlConnection(connectionString);
-            connection.Open();
+            propertys.Add("Schema", context.Request.Scheme);
+            propertys.Add("Host", context.Request.Host.Value);
+            propertys.Add("Path", context.Request.Path.Value);
+            propertys.Add("Controller", controller);
+            propertys.Add("Action", action);
+            propertys.Add("Query", context.Request.QueryString.Value);
+            propertys.Add("Method", context.Request.Method);
+            propertys.Add("ContentType", context.Request.ContentType);
+            propertys.Add("RequestDate", requestDate);
+            propertys.Add("Request", request);
+            propertys.Add("Origin", context.Request.Headers["origin"].ToString());
+            propertys.Add("Ip", context.Connection.RemoteIpAddress.ToString());
+            propertys.Add("UserAgent", context.Request.Headers[HeaderNames.UserAgent].ToString());
+            propertys.Add("UserId", currentUserService.UserId);
+            propertys.Add("ResponseDate", responseDate);
+            propertys.Add("Response", response);
+            propertys.Add("ElapsedMilliseconds", elapsedMilliseconds);
+            propertys.Add("StatusCode", context.Response.StatusCode);
 
-            SqlCommand command = new SqlCommand(
-                $"{schema}.UpdateWebRequest", connection)
+            using (logger.BeginScope(propertys))
             {
-                CommandType = System.Data.CommandType.StoredProcedure
-            };
-
-            command.Parameters.AddWithValue("@id", id);
-            var contentType = context.Response.ContentType ?? string.Empty;
-            if (contentType.Contains("application/json"))
-            {
-                command.Parameters.AddWithValue("@responseBody", text);
+                logger.LogInformation("HTTP {method} {path}{querystring} responded {statuscode} in {elapsed} ms", context.Request.Method, context.Request.Path.Value, context.Request.QueryString.Value, context.Response.StatusCode, elapsedMilliseconds);
             }
-            else
-            {
-                var ModelState = context.Features.Get<ModelStateFeature>()?.ModelState;
-                if (ModelState != null && !ModelState.IsValid)
-                {
-                    status = (int)HttpStatusCode.BadRequest;
 
-                    var errors = ModelState.Values.Where(v => v.Errors.Count > 0)
-                           .SelectMany(v => v.Errors)
-                           .ToList();
-
-                    command.Parameters.AddWithValue("@responseBody", JsonConvert.SerializeObject(errors));
-                }
-            }
-            command.Parameters.AddWithValue("@statusCode", status);
-
-            command.ExecuteNonQuery();
-            connection.Close();
-
-            await responseBody.CopyToAsync(original);
+            await responseBody.CopyToAsync(originalResponseBody);
         }
 
-        private async Task<int> LogRequest(HttpContext context)
+        private async Task<string> GetRequest(HttpContext context)
         {
-            if (!context.Request.RouteValues.ContainsKey("controller")) // resource as image 
-                return -1;
-
-            context.Request.EnableBuffering();
+            var options = new JsonSerializerOptions()
+            {
+                WriteIndented = false,
+            };
 
             await using var requestStream = recyclableMemoryStreamManager.GetStream();
 
-            var queryString = context.Request.QueryString.Value;
-
-            foreach (var additionalParameter in additionalParameters)
-            {
-                var value = context.Request.Query.ContainsKey(additionalParameter.QueryParameter) ? context.Request.Query[additionalParameter.QueryParameter].ToString() : default(string);
-                if (value == null && additionalParameter.IsMandatory)
-                    return -1;
-
-                additionalParameter.SetValue(value);
-            }
-
-            var authorization = context.Request.Headers["Authorization"].FirstOrDefault();
-            var userAgent = context.Request.Headers[HeaderNames.UserAgent].ToString();
-
-            string controller = context.Request.RouteValues["controller"].ToString();
-            string action = context.Request.RouteValues["action"].ToString();
-
-            using SqlConnection connection = new SqlConnection(connectionString);
-            connection.Open();
-
-            SqlCommand command = new SqlCommand(
-                    $"{schema}.InsertWebRequest", connection)
-            {
-                CommandType = System.Data.CommandType.StoredProcedure
-            };
-
-
-            var contentType = context.Request.ContentType ?? string.Empty;
-
-            string request;
             if (!context.Request.HasFormContentType)
             {
                 await context.Request.Body.CopyToAsync(requestStream);
-                request = ReadStreamInChunks(requestStream);
+                return ReadStreamInChunks(requestStream);
             }
-            else if (context.Request.Form.Count() == 0 && !context.Request.Form.Files.Any())
+
+            if (context.Request.Form.Count == 0 && !context.Request.Form.Files.Any())
             {
                 await context.Request.Body.CopyToAsync(requestStream);
-                request = ReadStreamInChunks(requestStream);
+                var request = ReadStreamInChunks(requestStream);
 
                 var dict = HttpUtility.ParseQueryString(HttpUtility.UrlDecode(request));
-                request = JsonConvert.SerializeObject(
-                    dict.AllKeys.ToDictionary(k => k, k => dict[k])
-                );
-            }
-            else
-            {
-                request = JsonConvert.SerializeObject(context.Request.Form.ToDictionary(k => k.Key, k => k.Value.First()));
+                return JsonSerializer.Serialize(dict.AllKeys.ToDictionary(k => k, k => dict[k]), options);
             }
 
-            command.Parameters.AddWithValue("@schema", context.Request.Scheme);
-            command.Parameters.AddWithValue("@host", context.Request.Host.Value);
-            command.Parameters.AddWithValue("@path", context.Request.Path.Value);
-            command.Parameters.AddWithValue("@controller", controller);
-            command.Parameters.AddWithValue("@action", action);
-            command.Parameters.AddWithValue("@query", queryString);
-            command.Parameters.AddWithValue("@method", context.Request.Method);
-            command.Parameters.AddWithValue("@contentType", contentType);
-            command.Parameters.AddWithValue("@request", request);
-            command.Parameters.AddWithValue("@ip", context.Connection.RemoteIpAddress.ToString());
-            command.Parameters.AddWithValue("@authorization", authorization ?? (object)DBNull.Value);
-            command.Parameters.AddWithValue("@user", context.User?.FindFirstValue(ClaimTypes.NameIdentifier) ?? context.User?.Identity?.Name ?? (object)DBNull.Value);
-            command.Parameters.AddWithValue("@userAgent", userAgent);
-            foreach (var additionalParameter in additionalParameters)
-            {
-                command.Parameters.AddWithValue("@" + additionalParameter.QueryParameter, additionalParameter.Value ?? (object)DBNull.Value);
-            }
-
-            int id = -1;
-            using (SqlDataReader reader = command.ExecuteReader())
-            {
-                while (reader.Read())
-                {
-                    id = (int)reader[0];
-                    break;
-                }
-            }
-
-            connection.Close();
-            return id;
+            return JsonSerializer.Serialize(context.Request.Form.ToDictionary(k => k.Key, k => k.Value.First()), options);
         }
 
         private static string ReadStreamInChunks(Stream stream)
