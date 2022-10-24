@@ -14,12 +14,14 @@ using Serilog.Filters;
 using Serilog.Sinks.MSSqlServer;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Security.Claims;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Web;
 
@@ -31,13 +33,16 @@ namespace fbognini.WebFramework.Middlewares
 
         private readonly RecyclableMemoryStreamManager recyclableMemoryStreamManager;
         private readonly RequestDelegate next;
+        private readonly bool LogResponse;
         private readonly IEnumerable<RequestAdditionalParameter> AdditionalParameters;
 
-        public RequestResponseLoggingMiddleware(RequestDelegate next, IEnumerable<RequestAdditionalParameter> additionalParameters = null)
+
+        public RequestResponseLoggingMiddleware(RequestDelegate next, RequestLoggingSettings settings)
         {
-            recyclableMemoryStreamManager = new RecyclableMemoryStreamManager();
-            this.next = next;
-            this.AdditionalParameters = additionalParameters ?? new List<RequestAdditionalParameter>();
+            this.recyclableMemoryStreamManager = new RecyclableMemoryStreamManager();
+            this.next = next; 
+            this.AdditionalParameters = settings.AdditionalParameters;
+            this.LogResponse = settings.SaveResponse;
         }
 
         public async Task Invoke(HttpContext context)
@@ -65,6 +70,9 @@ namespace fbognini.WebFramework.Middlewares
 
             var controller = controllerActionDescriptor.ControllerName;
             var action = controllerActionDescriptor.ActionName;
+            var area = controllerActionDescriptor.RouteValues.ContainsKey("area")
+                ? controllerActionDescriptor.RouteValues["area"]
+                : null;
 
             var propertys = new Dictionary<string, object>()
             {
@@ -121,19 +129,29 @@ namespace fbognini.WebFramework.Middlewares
                 propertys.Add("Schema", context.Request.Scheme);
                 propertys.Add("Host", context.Request.Host.Value);
                 propertys.Add("Path", context.Request.Path.Value);
+                propertys.Add("Area", area);
                 propertys.Add("Controller", controller);
                 propertys.Add("Action", action);
                 propertys.Add("Query", context.Request.QueryString.Value);
                 propertys.Add("Method", context.Request.Method);
-                propertys.Add("ContentType", context.Request.ContentType);
+                propertys.Add("RequestContentType", context.Request.ContentType);
                 propertys.Add("RequestDate", requestDate);
                 propertys.Add("Request", request);
                 propertys.Add("Origin", context.Request.Headers["origin"].ToString());
                 propertys.Add("Ip", context.Connection.RemoteIpAddress.ToString());
                 propertys.Add("UserAgent", context.Request.Headers[HeaderNames.UserAgent].ToString());
                 propertys.Add("UserId", currentUserService.UserId);
+                propertys.Add("ResponseContentType", context.Response.ContentType);
                 propertys.Add("ResponseDate", responseDate);
-                propertys.Add("Response", response);
+                if (LogResponse)
+                {
+                    propertys.Add("Response", response);
+                }
+                var (model, viewdata, tempdata) = GetModel(context);
+                propertys.Add("Model", model);
+                propertys.Add("ViewData", viewdata);
+                propertys.Add("TempData", tempdata);
+                propertys.Add("InvalidModelState", GetInvalidModelState(context));
                 propertys.Add("ElapsedMilliseconds", elapsedMilliseconds);
                 propertys.Add("StatusCode", context.Response.StatusCode);
 
@@ -153,11 +171,6 @@ namespace fbognini.WebFramework.Middlewares
 
         private async Task<string> GetRequest(HttpContext context)
         {
-            var options = new JsonSerializerOptions()
-            {
-                WriteIndented = false,
-            };
-
             await using var requestStream = recyclableMemoryStreamManager.GetStream();
 
             if (!context.Request.HasFormContentType)
@@ -172,10 +185,51 @@ namespace fbognini.WebFramework.Middlewares
                 var request = ReadStreamInChunks(requestStream);
 
                 var dict = HttpUtility.ParseQueryString(HttpUtility.UrlDecode(request));
-                return JsonSerializer.Serialize(dict.AllKeys.ToDictionary(k => k, k => dict[k]), options);
+                return Serialize(dict.AllKeys.ToDictionary(k => k, k => dict[k]));
             }
 
-            return JsonSerializer.Serialize(context.Request.Form.ToDictionary(k => k.Key, k => k.Value.First()), options);
+            return Serialize(context.Request.Form.ToDictionary(k => k.Key, k => k.Value.First()));
+        }
+
+        private static (string Model, string ViewData, string TempData) GetModel(HttpContext context)
+        {
+            var key = typeof(Microsoft.AspNetCore.Mvc.IUrlHelper);
+            if (context.Items.TryGetValue(key, out var helper) == false)
+            {
+                return (null, null, null);
+            }
+
+            var property = helper.GetType().GetProperty("ActionContext");
+            if (property == null)
+            {
+                return (null, null, null);
+            }
+
+            var viewcontext = (Microsoft.AspNetCore.Mvc.Rendering.ViewContext)property.GetValue(helper);
+            var model = viewcontext.ViewData.Model != null ? Serialize(viewcontext.ViewData.Model) : null;
+            var viewdata = Serialize(viewcontext.ViewData);
+            var tempdata = Serialize(viewcontext.TempData);
+
+            return (model, viewdata, tempdata);
+        }
+
+        private static string GetInvalidModelState(HttpContext context)
+        {
+            var feature = context.Features.Get<ModelStateFeature>();
+            if (feature == null || feature.ModelState == null || feature.ModelState.IsValid)
+            {
+                return null;
+            }
+
+            var errors = feature.ModelState
+                .Where(v => v.Value.Errors.Count > 0)
+                .Select(x => new
+                {
+                    Key = x.Key,
+                    Errors = x.Value.Errors.ToList()
+                });
+
+            return Serialize(errors);
         }
 
         private static string ReadStreamInChunks(Stream stream)
@@ -197,6 +251,15 @@ namespace fbognini.WebFramework.Middlewares
             } while (readChunkLength > 0);
 
             return textWriter.ToString();
+        }
+    
+        private static string Serialize(object model)
+        {
+            return JsonSerializer.Serialize(model, new JsonSerializerOptions()
+            {
+                ReferenceHandler = ReferenceHandler.IgnoreCycles,
+                WriteIndented = false
+            });
         }
     }
 }
