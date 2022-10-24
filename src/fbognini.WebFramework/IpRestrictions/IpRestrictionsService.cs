@@ -15,7 +15,7 @@ namespace fbognini.WebFramework.IpRestrictions
         public bool IsAllowed(string ip) => !IsBlocked(ip);
         public bool IsBlocked(string ip)
         {
-            return (!IsValidIp(ip, settings.Whitelist) || IsValidIp(ip, settings.Blacklist));
+            return (!IsValidIp(ip, settings.WhitelistIps) || IsValidIp(ip, settings.BlacklistIps));
         }
 
         private static bool IsValidIp(string ip, List<string> ips)
