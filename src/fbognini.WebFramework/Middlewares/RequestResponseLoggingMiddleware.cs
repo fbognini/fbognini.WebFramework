@@ -126,38 +126,45 @@ namespace fbognini.WebFramework.Middlewares
                 var response = await new StreamReader(context.Response.Body).ReadToEndAsync();
                 context.Response.Body.Seek(0, SeekOrigin.Begin);
 
-                propertys.Add("Schema", context.Request.Scheme);
-                propertys.Add("Host", context.Request.Host.Value);
-                propertys.Add("Path", context.Request.Path.Value);
-                propertys.Add("Area", area);
-                propertys.Add("Controller", controller);
-                propertys.Add("Action", action);
-                propertys.Add("Query", context.Request.QueryString.Value);
-                propertys.Add("Method", context.Request.Method);
-                propertys.Add("RequestContentType", context.Request.ContentType);
-                propertys.Add("RequestDate", requestDate);
-                propertys.Add("Request", request);
-                propertys.Add("Origin", context.Request.Headers["origin"].ToString());
-                propertys.Add("Ip", context.Connection.RemoteIpAddress.ToString());
-                propertys.Add("UserAgent", context.Request.Headers[HeaderNames.UserAgent].ToString());
-                propertys.Add("UserId", currentUserService.UserId);
-                propertys.Add("ResponseContentType", context.Response.ContentType);
-                propertys.Add("ResponseDate", responseDate);
-                if (LogResponse)
+                try
                 {
-                    propertys.Add("Response", response);
-                }
-                var (model, viewdata, tempdata) = GetModel(context);
-                propertys.Add("Model", model);
-                propertys.Add("ViewData", viewdata);
-                propertys.Add("TempData", tempdata);
-                propertys.Add("InvalidModelState", GetInvalidModelState(context));
-                propertys.Add("ElapsedMilliseconds", elapsedMilliseconds);
-                propertys.Add("StatusCode", context.Response.StatusCode);
+                    propertys.Add("Schema", context.Request.Scheme);
+                    propertys.Add("Host", context.Request.Host.Value);
+                    propertys.Add("Path", context.Request.Path.Value);
+                    propertys.Add("Area", area);
+                    propertys.Add("Controller", controller);
+                    propertys.Add("Action", action);
+                    propertys.Add("Query", context.Request.QueryString.Value);
+                    propertys.Add("Method", context.Request.Method);
+                    propertys.Add("RequestContentType", context.Request.ContentType);
+                    propertys.Add("RequestDate", requestDate);
+                    propertys.Add("Request", request);
+                    propertys.Add("Origin", context.Request.Headers["origin"].ToString());
+                    propertys.Add("Ip", context.Connection.RemoteIpAddress.ToString());
+                    propertys.Add("UserAgent", context.Request.Headers[HeaderNames.UserAgent].ToString());
+                    propertys.Add("UserId", currentUserService.UserId);
+                    propertys.Add("ResponseContentType", context.Response.ContentType);
+                    propertys.Add("ResponseDate", responseDate);
+                    if (LogResponse)
+                    {
+                        propertys.Add("Response", response);
+                    }
+                    var (model, viewdata, tempdata) = GetModel(context);
+                    propertys.Add("Model", model);
+                    propertys.Add("ViewData", viewdata);
+                    propertys.Add("TempData", tempdata);
+                    propertys.Add("InvalidModelState", GetInvalidModelState(context));
+                    propertys.Add("ElapsedMilliseconds", elapsedMilliseconds);
+                    propertys.Add("StatusCode", context.Response.StatusCode);
 
-                using (logger.BeginScope(propertys))
+                    using (logger.BeginScope(propertys))
+                    {
+                        logger.LogInformation("HTTP {method} {path}{querystring} responded {statuscode} in {elapsed} ms", context.Request.Method, context.Request.Path.Value, context.Request.QueryString.Value, context.Response.StatusCode, elapsedMilliseconds);
+                    }
+                }
+                catch (Exception ex)
                 {
-                    logger.LogInformation("HTTP {method} {path}{querystring} responded {statuscode} in {elapsed} ms", context.Request.Method, context.Request.Path.Value, context.Request.QueryString.Value, context.Response.StatusCode, elapsedMilliseconds);
+                    logger.LogWarning(ex, "Unexpeted error during logging web request {path}{query}", context.Request.Path.Value, context.Request.QueryString.Value);
                 }
 
                 await responseBody.CopyToAsync(originalResponseBody);
@@ -205,7 +212,12 @@ namespace fbognini.WebFramework.Middlewares
                 return (null, null, null);
             }
 
-            var viewcontext = (Microsoft.AspNetCore.Mvc.Rendering.ViewContext)property.GetValue(helper);
+            var viewcontext = property.GetValue(helper) as Microsoft.AspNetCore.Mvc.Rendering.ViewContext;
+            if (viewcontext == null)
+            {
+                return (null, null, null);
+            }
+
             var model = viewcontext.ViewData.Model != null ? Serialize(viewcontext.ViewData.Model) : null;
             var viewdata = Serialize(viewcontext.ViewData);
             var tempdata = Serialize(viewcontext.TempData);
