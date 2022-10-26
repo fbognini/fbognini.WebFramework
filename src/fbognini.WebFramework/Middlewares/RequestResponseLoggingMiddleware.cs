@@ -149,11 +149,12 @@ namespace fbognini.WebFramework.Middlewares
                     {
                         propertys.Add("Response", response);
                     }
-                    var (model, viewdata, tempdata) = GetModel(context);
+                    var (model, viewdata, tempdata, redirect) = GetModel(context);
                     propertys.Add("Model", model);
                     propertys.Add("ViewData", viewdata);
                     propertys.Add("TempData", tempdata);
                     propertys.Add("InvalidModelState", GetInvalidModelState(context));
+                    propertys.Add("RedirectTo", redirect);
                     propertys.Add("ElapsedMilliseconds", elapsedMilliseconds);
                     propertys.Add("StatusCode", context.Response.StatusCode);
 
@@ -198,31 +199,31 @@ namespace fbognini.WebFramework.Middlewares
             return Serialize(context.Request.Form.ToDictionary(k => k.Key, k => k.Value.First()));
         }
 
-        private static (string Model, string ViewData, string TempData) GetModel(HttpContext context)
+        private static (string Model, string ViewData, string TempData, string RedirectTo) GetModel(HttpContext context)
         {
             var key = typeof(Microsoft.AspNetCore.Mvc.IUrlHelper);
             if (context.Items.TryGetValue(key, out var helper) == false)
             {
-                return (null, null, null);
+                return (null, null, null, null);
             }
 
             var property = helper.GetType().GetProperty("ActionContext");
             if (property == null)
             {
-                return (null, null, null);
+                return (null, null, null, null);
             }
 
             var viewcontext = property.GetValue(helper) as Microsoft.AspNetCore.Mvc.Rendering.ViewContext;
             if (viewcontext == null)
             {
-                return (null, null, null);
+                return (null, null, null, context.Response.Headers[HeaderNames.Location].ToString());
             }
 
             var model = viewcontext.ViewData.Model != null ? Serialize(viewcontext.ViewData.Model) : null;
             var viewdata = Serialize(viewcontext.ViewData);
             var tempdata = Serialize(viewcontext.TempData);
 
-            return (model, viewdata, tempdata);
+            return (model, viewdata, tempdata, null);
         }
 
         private static string GetInvalidModelState(HttpContext context)

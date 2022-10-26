@@ -3,7 +3,7 @@
   <PropertyGroup>
     <PackageId>fbognini.WebFramework</PackageId>
     <TargetFramework>net6.0</TargetFramework>
-    <Version>6.3.5</Version>
+    <Version>6.3.6</Version>
     <Authors>Francesco Bognini</Authors>
     <Company>Francesco Bognini</Company>
     <PackageProjectUrl>https://github.com/fbognini/fbognini.WebFramework</PackageProjectUrl>
