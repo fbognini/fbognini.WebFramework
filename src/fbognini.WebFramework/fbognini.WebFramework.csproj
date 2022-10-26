@@ -3,7 +3,7 @@
   <PropertyGroup>
     <PackageId>fbognini.WebFramework</PackageId>
     <TargetFramework>net6.0</TargetFramework>
-    <Version>6.3.6</Version>
+    <Version>6.3.7</Version>
     <Authors>Francesco Bognini</Authors>
     <Company>Francesco Bognini</Company>
     <PackageProjectUrl>https://github.com/fbognini/fbognini.WebFramework</PackageProjectUrl>
@@ -11,9 +11,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="fbognini.Infrastructure" Version="6.5.2" />
     
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="6.0.4" />
+    <PackageReference Include="fbognini.Core" Version="6.3.3" />    
+    <PackageReference Include="FluentValidation.AspNetCore" Version="11.0.0" />
+    
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.4" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="5.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer" Version="5.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.ViewFeatures" Version="2.2.0" />
@@ -22,7 +24,6 @@
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
     <PackageReference Include="NSwag.AspNetCore" Version="13.15.10" />
     <PackageReference Include="ZymLabs.NSwag.FluentValidation.AspNetCore" Version="0.5.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.4" />
 
     <PackageReference Include="Serilog" Version="2.12.0" />
     <PackageReference Include="Serilog.Sinks.MSSqlServer" Version="6.0.0" />

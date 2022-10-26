@@ -1,14 +1,7 @@
-﻿using fbognini.Application.Multitenancy;
-
-namespace fbognini.WebFramework.OpenApi;
+﻿namespace fbognini.WebFramework.OpenApi;
 
 public class TenantIdHeaderAttribute : SwaggerHeaderAttribute
 {
-    public TenantIdHeaderAttribute()
-        : this(MultitenancyConstants.TenantIdName)
-    {
-    }
-
     public TenantIdHeaderAttribute(string name)
        : base(
            name,
