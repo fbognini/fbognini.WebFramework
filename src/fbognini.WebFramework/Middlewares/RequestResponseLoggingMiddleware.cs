@@ -33,6 +33,7 @@ namespace fbognini.WebFramework.Middlewares
 
         private readonly RecyclableMemoryStreamManager recyclableMemoryStreamManager;
         private readonly RequestDelegate next;
+        private readonly bool LogRequest;
         private readonly bool LogResponse;
         private readonly IEnumerable<RequestAdditionalParameter> AdditionalParameters;
 
@@ -42,7 +43,8 @@ namespace fbognini.WebFramework.Middlewares
             this.recyclableMemoryStreamManager = new RecyclableMemoryStreamManager();
             this.next = next; 
             this.AdditionalParameters = settings.AdditionalParameters;
-            this.LogResponse = settings.SaveResponse;
+            this.LogRequest = settings.LogRequest;
+            this.LogResponse = settings.LogResponse;
         }
 
         public async Task Invoke(HttpContext context)
@@ -63,6 +65,13 @@ namespace fbognini.WebFramework.Middlewares
                 .GetMetadata<ControllerActionDescriptor>();
 
             if (controllerActionDescriptor == null || string.IsNullOrWhiteSpace(controllerActionDescriptor.ControllerName) || string.IsNullOrWhiteSpace(controllerActionDescriptor.ActionName))
+            {
+                await next(context);
+                return;
+            }
+
+            var ignoreLogging = endpoint.Metadata.OfType<IgnoreRequestLoggingAttribute>().LastOrDefault();
+            if (ignoreLogging != null && ignoreLogging.IgnoreLogging)
             {
                 await next(context);
                 return;
@@ -106,11 +115,7 @@ namespace fbognini.WebFramework.Middlewares
                 var requestDate = DateTime.UtcNow;
                 var currentUserService = context.RequestServices.GetRequiredService<ICurrentUserService>();
 
-                context.Request.EnableBuffering();
-
-                string request = await GetRequest(context);
-
-                context.Request.Body.Position = 0;
+                string request = await ReadRequest(context, ignoreLogging);
 
                 var originalResponseBody = context.Response.Body;
 
@@ -119,12 +124,12 @@ namespace fbognini.WebFramework.Middlewares
 
                 await next(context);
 
+                context.Response.Body.Seek(0, SeekOrigin.Begin);
+
                 var responseDate = DateTime.UtcNow;
                 var elapsedMilliseconds = (responseDate - requestDate).Milliseconds;
 
-                context.Response.Body.Seek(0, SeekOrigin.Begin);
-                var response = await new StreamReader(context.Response.Body).ReadToEndAsync();
-                context.Response.Body.Seek(0, SeekOrigin.Begin);
+                string response = await ReadResponse(context, ignoreLogging);
 
                 try
                 {
@@ -137,6 +142,7 @@ namespace fbognini.WebFramework.Middlewares
                     propertys.Add("Query", context.Request.QueryString.Value);
                     propertys.Add("Method", context.Request.Method);
                     propertys.Add("RequestContentType", context.Request.ContentType);
+                    propertys.Add("RequestContentLength", context.Request.ContentLength);
                     propertys.Add("RequestDate", requestDate);
                     propertys.Add("Request", request);
                     propertys.Add("Origin", context.Request.Headers["origin"].ToString());
@@ -144,11 +150,10 @@ namespace fbognini.WebFramework.Middlewares
                     propertys.Add("UserAgent", context.Request.Headers[HeaderNames.UserAgent].ToString());
                     propertys.Add("UserId", currentUserService.UserId);
                     propertys.Add("ResponseContentType", context.Response.ContentType);
+                    propertys.Add("ResponseContentLength", context.Response.ContentLength);
                     propertys.Add("ResponseDate", responseDate);
-                    if (LogResponse)
-                    {
-                        propertys.Add("Response", response);
-                    }
+                    propertys.Add("Response", response);
+
                     var (model, viewdata, tempdata, redirect) = GetModel(context);
                     propertys.Add("Model", model);
                     propertys.Add("ViewData", viewdata);
@@ -177,6 +182,27 @@ namespace fbognini.WebFramework.Middlewares
             }
         }
 
+        private async Task<string> ReadRequest(HttpContext context, IgnoreRequestLoggingAttribute ignoreLogging)
+        {
+            if (ignoreLogging != null && ignoreLogging.IgnoreRequestLogging)
+            {
+                return "[[attribute - no log]]";
+            }
+
+            if (ignoreLogging == null && LogRequest == false)
+            {
+                return "[[configuration - no log]]";
+            }
+
+            context.Request.EnableBuffering();
+
+            string request = await GetRequest(context);
+
+            context.Request.Body.Position = 0;
+
+            return request;
+        }
+
         private async Task<string> GetRequest(HttpContext context)
         {
             await using var requestStream = recyclableMemoryStreamManager.GetStream();
@@ -197,6 +223,24 @@ namespace fbognini.WebFramework.Middlewares
             }
 
             return Serialize(context.Request.Form.ToDictionary(k => k.Key, k => k.Value.First()));
+        }
+
+        private async Task<string> ReadResponse(HttpContext context, IgnoreRequestLoggingAttribute ignoreLogging)
+        {
+            if (ignoreLogging != null && ignoreLogging.IgnoreResponseLogging)
+            {
+                return "[[attribute - no log]]";
+            }
+
+            if (ignoreLogging == null && LogResponse == false)
+            {
+                return "[[configuration - no log]]";
+            }
+
+            var response = await new StreamReader(context.Response.Body).ReadToEndAsync();
+            context.Response.Body.Seek(0, SeekOrigin.Begin);
+
+            return response;
         }
 
         private static (string Model, string ViewData, string TempData, string RedirectTo) GetModel(HttpContext context)

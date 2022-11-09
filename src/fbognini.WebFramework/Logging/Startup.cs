@@ -29,9 +29,11 @@ namespace fbognini.WebFramework.Logging
                     new SqlColumn("Query", System.Data.SqlDbType.NVarChar, false),
                     new SqlColumn("Method", System.Data.SqlDbType.NVarChar, false, 10),
                     new SqlColumn("RequestContentType", System.Data.SqlDbType.NVarChar, true, 50),
+                    new SqlColumn("RequestContentLength", System.Data.SqlDbType.BigInt, true),
                     new SqlColumn("RequestDate", System.Data.SqlDbType.DateTime2, false),
                     new SqlColumn("Request", System.Data.SqlDbType.NVarChar, false, -1),
                     new SqlColumn("ResponseContentType", System.Data.SqlDbType.NVarChar, true, 50),
+                    new SqlColumn("ResponseContentLength", System.Data.SqlDbType.BigInt, true),
                     new SqlColumn("ResponseDate", System.Data.SqlDbType.DateTime2, false),
                     new SqlColumn("Response", System.Data.SqlDbType.NVarChar, true, -1),
                     new SqlColumn("ElapsedMilliseconds", System.Data.SqlDbType.Float, false),
@@ -58,9 +60,11 @@ namespace fbognini.WebFramework.Logging
                     new SqlColumn("Query", System.Data.SqlDbType.NVarChar, false),
                     new SqlColumn("Method", System.Data.SqlDbType.NVarChar, false, 10),
                     new SqlColumn("RequestContentType", System.Data.SqlDbType.NVarChar, true, 50),
+                    new SqlColumn("RequestContentLength", System.Data.SqlDbType.BigInt, true),
                     new SqlColumn("RequestDate", System.Data.SqlDbType.DateTime2, false),
                     new SqlColumn("Request", System.Data.SqlDbType.NVarChar, false, -1),
                     new SqlColumn("ResponseContentType", System.Data.SqlDbType.NVarChar, true, 50),
+                    new SqlColumn("ResponseContentLength", System.Data.SqlDbType.BigInt, true),
                     new SqlColumn("ResponseDate", System.Data.SqlDbType.DateTime2, false),
                     new SqlColumn("Response", System.Data.SqlDbType.NVarChar, true, -1),
                     new SqlColumn("Model", System.Data.SqlDbType.NVarChar, true, -1),
@@ -86,11 +90,17 @@ namespace fbognini.WebFramework.Logging
                 additionalColumns.AddRange(parameters.Select(x => x.SqlColumn));
             }
 
-            var sinkOptions = new MSSqlServerSinkOptions { AutoCreateSqlTable = true, TableName = tableName, SchemaName = schemaName };
+            var sinkOptions = new MSSqlServerSinkOptions 
+            { 
+                AutoCreateSqlTable = true, 
+                TableName = tableName, 
+                SchemaName = schemaName
+            };
 
             var columnOptions = new ColumnOptions()
             {
-                AdditionalColumns = additionalColumns
+                AdditionalColumns = additionalColumns,
+                DisableTriggers = true
             };
 
             columnOptions.Store.Remove(StandardColumn.Message);

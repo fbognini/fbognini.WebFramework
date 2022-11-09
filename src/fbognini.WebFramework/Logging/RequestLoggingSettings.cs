@@ -8,13 +8,20 @@ namespace fbognini.WebFramework.Logging
 {
     public class RequestLoggingSettings
     {
-        public RequestLoggingSettings(bool saveResponse, IEnumerable<RequestAdditionalParameter> additionalParameters = null)
+        public RequestLoggingSettings(IEnumerable<RequestAdditionalParameter> additionalParameters = null)
+            : this(true, true, additionalParameters)
         {
-            SaveResponse = saveResponse;
+        }
+
+        public RequestLoggingSettings(bool logrequest, bool logresponse, IEnumerable<RequestAdditionalParameter> additionalParameters = null)
+        {
+            LogRequest = logrequest;
+            LogResponse = logresponse;
             AdditionalParameters = additionalParameters ?? Enumerable.Empty<RequestAdditionalParameter>();
         }
 
-        public bool SaveResponse { get; }
+        public bool LogRequest { get; }
+        public bool LogResponse { get; }
         public IEnumerable<RequestAdditionalParameter> AdditionalParameters { get; }
     }
 }

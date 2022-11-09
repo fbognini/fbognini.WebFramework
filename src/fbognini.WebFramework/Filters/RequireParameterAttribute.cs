@@ -23,32 +23,6 @@ namespace fbognini.WebFramework.Filters
             Mode = matchMode;
         }
 
-        //public override bool IsValidForRequest(ControllerContext controllerContext, MethodInfo methodInfo)
-        //{
-        //    switch (Mode)
-        //    {
-        //        case MatchMode.All:
-        //        default:
-        //            return (
-        //                (IncludeGET && ParameterNames.All(p => controllerContext.HttpContext.Request.Query.ContainsKey(p)))
-        //                || (IncludePOST && ParameterNames.All(p => controllerContext.HttpContext.Request.Form.ContainsKey(p)))
-        //                || (IncludeCookies && ParameterNames.All(p => controllerContext.HttpContext.Request.Cookies.ContainsKey(p)))
-        //                );
-        //        case MatchMode.Any:
-        //            return (
-        //                (IncludeGET && ParameterNames.Any(p => controllerContext.HttpContext.Request.Query.ContainsKey(p)))
-        //                || (IncludePOST && ParameterNames.Any(p => controllerContext.HttpContext.Request.Form.ContainsKey(p)))
-        //                || (IncludeCookies && ParameterNames.Any(p => controllerContext.HttpContext.Request.Cookies.ContainsKey(p)))
-        //                );
-        //        case MatchMode.None:
-        //            return (
-        //                (!IncludeGET || !ParameterNames.Any(p => controllerContext.HttpContext.Request.Query.ContainsKey(p)))
-        //                && (!IncludePOST || !ParameterNames.Any(p => controllerContext.HttpContext.Request.Form.ContainsKey(p)))
-        //                && (!IncludeCookies || !ParameterNames.Any(p => controllerContext.HttpContext.Request.Cookies.ContainsKey(p)))
-        //                );
-        //    }
-        //}
-
         public override bool IsValidForRequest(RouteContext routeContext, ActionDescriptor action)
         {
             switch (Mode)
