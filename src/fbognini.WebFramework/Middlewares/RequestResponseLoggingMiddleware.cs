@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.IO;
 using Microsoft.Net.Http.Headers;
 using Serilog;
@@ -33,22 +34,20 @@ namespace fbognini.WebFramework.Middlewares
 
         private readonly RecyclableMemoryStreamManager recyclableMemoryStreamManager;
         private readonly RequestDelegate next;
-        private readonly bool LogRequest;
-        private readonly bool LogResponse;
-        private readonly IEnumerable<RequestAdditionalParameter> AdditionalParameters;
+        private bool LogRequest { get; set; }
+        private bool LogResponse { get; set; }
+        private IEnumerable<RequestAdditionalParameter> AdditionalParameters { get; set; }
 
 
-        public RequestResponseLoggingMiddleware(RequestDelegate next, RequestLoggingSettings settings)
+        public RequestResponseLoggingMiddleware(RequestDelegate next)
         {
             this.recyclableMemoryStreamManager = new RecyclableMemoryStreamManager();
             this.next = next; 
-            this.AdditionalParameters = settings.AdditionalParameters;
-            this.LogRequest = settings.LogRequest;
-            this.LogResponse = settings.LogResponse;
         }
 
         public async Task Invoke(HttpContext context)
         {
+            LoadOptions(context);
 
             var logger = context.RequestServices.GetRequiredService<ILogger<RequestResponseLoggingMiddleware>>();
             var endpoint = context
@@ -317,6 +316,14 @@ namespace fbognini.WebFramework.Middlewares
                 ReferenceHandler = ReferenceHandler.IgnoreCycles,
                 WriteIndented = false
             });
+        }
+
+        private void LoadOptions(HttpContext context)
+        {
+            var settings = context.RequestServices.GetRequiredService<IOptionsSnapshot<RequestLoggingSettings>>().Value;
+            AdditionalParameters = settings.AdditionalParameters ?? Enumerable.Empty<RequestAdditionalParameter>();
+            LogRequest = settings.LogRequest;
+            LogResponse = settings.LogResponse;
         }
     }
 }

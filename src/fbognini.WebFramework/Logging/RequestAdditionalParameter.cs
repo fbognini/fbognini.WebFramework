@@ -14,8 +14,14 @@ namespace fbognini.WebFramework.Logging
         Query,
         Header
     }
+
     public class RequestAdditionalParameter
     {
+        public RequestAdditionalParameter()
+        {
+
+        }
+
         public RequestAdditionalParameter(string parameter, SqlColumn sqlColumn, RequestAdditionalParameterType type = RequestAdditionalParameterType.Query)
         {
             Parameter = parameter;
@@ -24,7 +30,7 @@ namespace fbognini.WebFramework.Logging
         }
 
         public string Parameter { get; set; }
-        public SqlColumn SqlColumn { get; }
+        public SqlColumn SqlColumn { get; set; }
         public RequestAdditionalParameterType Type { get; set; }
     }
 }

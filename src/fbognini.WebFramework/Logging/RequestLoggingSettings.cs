@@ -6,22 +6,23 @@ using System.Threading.Tasks;
 
 namespace fbognini.WebFramework.Logging
 {
+    public class RetentionOptions
+    {
+        public int Days { get; set; } = -1;
+        public int BatchSize { get; set; } = 1000;
+        public bool RunOnStartup { get; set; } = false;
+        public string CronExpression { get; set; } = "0 * * * *"; // every hour
+    }
+
     public class RequestLoggingSettings
     {
-        public RequestLoggingSettings(IEnumerable<RequestAdditionalParameter> additionalParameters = null)
-            : this(true, true, additionalParameters)
-        {
-        }
-
-        public RequestLoggingSettings(bool logrequest, bool logresponse, IEnumerable<RequestAdditionalParameter> additionalParameters = null)
-        {
-            LogRequest = logrequest;
-            LogResponse = logresponse;
-            AdditionalParameters = additionalParameters ?? Enumerable.Empty<RequestAdditionalParameter>();
-        }
-
-        public bool LogRequest { get; }
-        public bool LogResponse { get; }
-        public IEnumerable<RequestAdditionalParameter> AdditionalParameters { get; }
+        public string ConnectionString { get; set; }
+        public string TableName { get; set; } = "Requests";
+        public string SchemaName { get; set; } = "dbo";
+        public string ColumnName { get; set; } = "TimeStamp";
+        public bool LogRequest { get; set; } = true;
+        public bool LogResponse { get; set; } = true;
+        public RetentionOptions RetentionOptions { get; set; } = new();
+        public IList<RequestAdditionalParameter> AdditionalParameters { get; set; }
     }
 }

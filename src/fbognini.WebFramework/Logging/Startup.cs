@@ -1,6 +1,10 @@
-﻿using fbognini.WebFramework.Middlewares;
+﻿using fbognini.WebFramework.IpRestrictions;
+using fbognini.WebFramework.Middlewares;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Serilog;
 using Serilog.Filters;
@@ -16,6 +20,76 @@ namespace fbognini.WebFramework.Logging
 {
     public static class Startup
     {
+        public static OptionsBuilder<RequestLoggingSettings> AddRequestLogging(this IServiceCollection services, Action<RequestLoggingSettings> options)
+        {
+            return services
+                .AddRequestLogging()
+                .Configure(options);
+        }
+
+        public static OptionsBuilder<RequestLoggingSettings> AddRequestLogging(this IServiceCollection services, IConfiguration configuration, Action<RequestLoggingSettings> options = null)
+        {
+            return services.AddRequestLogging(configuration.GetSection(nameof(RequestLoggingSettings)), options);
+        }
+
+        public static OptionsBuilder<RequestLoggingSettings> AddRequestLogging(this IServiceCollection services, IConfigurationSection section, Action<RequestLoggingSettings> options = null)
+        {
+            var optionsBuilder =
+                services.AddRequestLogging()
+                        .Bind(section);
+
+            if (options != null)
+            {
+                optionsBuilder.Configure(options);
+            }
+
+            return optionsBuilder;
+        }
+
+        private static OptionsBuilder<RequestLoggingSettings> AddRequestLogging(this IServiceCollection services) 
+        {
+            services.AddHostedService<RequestLoggingManageRetentionWorker>();
+            return services.AddOptions<RequestLoggingSettings>();
+        }
+
+
+        public static OptionsBuilder<RequestLoggingSettings> IgnoreMvcResponses(this OptionsBuilder<RequestLoggingSettings> optionsBuilder)
+        {
+            optionsBuilder
+                .Configure<IHttpContextAccessor>(
+                    (options, http) => {
+
+                        if (http == null || http.HttpContext == null || http.HttpContext.Request == null)
+                        {
+                            return;
+                        }
+
+                        var context = http.HttpContext;
+
+                        if (context.Request.Path.StartsWithSegments("/api"))
+                        {
+                            options.LogResponse = true;
+                        }
+                        else
+                        {
+                            if (context.Request.RouteValues.ContainsKey("controller"))
+                            {
+                                options.LogResponse = false;
+                            }
+                        }
+                    });
+
+            return optionsBuilder;
+        }
+
+
+        public static LoggerConfiguration WriteWebRequestToSqlServer(this LoggerConfiguration logger, IServiceProvider serviceProvider)
+        {
+            var settings = serviceProvider.GetService<IOptions<RequestLoggingSettings>>().Value;
+
+            return logger.WriteWebRequestToSqlServer(settings.ConnectionString, settings.TableName, settings.SchemaName, settings.AdditionalParameters);
+        }
+
         public static LoggerConfiguration WriteWebRequestToSqlServer(this LoggerConfiguration logger, string connectionstring, string tableName, string schemaName, IEnumerable<RequestAdditionalParameter> parameters = null)
         {
             var additionalColumns = new List<SqlColumn>()
@@ -45,6 +119,14 @@ namespace fbognini.WebFramework.Logging
                 };
 
             return logger.WriteRequestToSqlServer(additionalColumns, connectionstring, tableName, schemaName, parameters);
+        }
+
+
+        public static LoggerConfiguration WriteMvcRequestToSqlServer(this LoggerConfiguration logger, IServiceProvider serviceProvider)
+        {
+            var settings = serviceProvider.GetService<IOptions<RequestLoggingSettings>>().Value;
+
+            return logger.WriteMvcRequestToSqlServer(settings.ConnectionString, settings.TableName, settings.SchemaName, settings.AdditionalParameters);
         }
 
         public static LoggerConfiguration WriteMvcRequestToSqlServer(this LoggerConfiguration logger, string connectionstring, string tableName, string schemaName, IEnumerable<RequestAdditionalParameter> parameters = null)
@@ -96,7 +178,6 @@ namespace fbognini.WebFramework.Logging
                 TableName = tableName, 
                 SchemaName = schemaName
             };
-
             var columnOptions = new ColumnOptions()
             {
                 AdditionalColumns = additionalColumns,
@@ -110,6 +191,7 @@ namespace fbognini.WebFramework.Logging
             columnOptions.Store.Remove(StandardColumn.Properties);
 
             logger
+                //.ReadFrom.o
                 .WriteTo
                     .Logger(lc => lc.Filter.ByIncludingOnly(Matching.FromSource(typeof(RequestResponseLoggingMiddleware).FullName))
                                     .Filter.ByIncludingOnly(Matching.WithProperty(RequestResponseLoggingMiddleware.ApiLoggingProperty))
@@ -125,9 +207,9 @@ namespace fbognini.WebFramework.Logging
             return logger;
         }
 
-        public static IApplicationBuilder UseRequestLogging(this IApplicationBuilder app, RequestLoggingSettings settings)
+        public static IApplicationBuilder UseRequestLogging(this IApplicationBuilder app)
         {
-            app.UseMiddleware<RequestResponseLoggingMiddleware>(settings);
+            app.UseMiddleware<RequestResponseLoggingMiddleware>();
             return app;
         }
     }

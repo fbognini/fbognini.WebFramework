@@ -3,7 +3,7 @@
   <PropertyGroup>
     <PackageId>fbognini.WebFramework</PackageId>
     <TargetFramework>net6.0</TargetFramework>
-    <Version>6.3.8</Version>
+    <Version>6.4.1</Version>
     <Authors>Francesco Bognini</Authors>
     <Company>Francesco Bognini</Company>
     <PackageProjectUrl>https://github.com/fbognini/fbognini.WebFramework</PackageProjectUrl>
@@ -11,6 +11,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    
+    <PackageReference Include="Cronos" Version="0.7.1" />
     
     <PackageReference Include="fbognini.Core" Version="6.3.3" />    
     <PackageReference Include="FluentValidation.AspNetCore" Version="11.0.0" />
