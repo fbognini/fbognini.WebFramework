@@ -13,9 +13,6 @@ namespace fbognini.WebFramework.SidebarMenu
     {
         public static SidebarMenu LoadSidebarMenu(this IServiceProvider provider, IConfiguration configuration, string baseNamespace)
         {
-            var controllerNamespace = $"{baseNamespace}.Controllers";
-            var areaNamespace = $"{baseNamespace}.Areas";
-
             var groups = configuration.GetSection(nameof(SidebarMenu)).Get<List<SidebarMenuGroup>>();
             foreach (var group in groups)
             {
@@ -24,8 +21,8 @@ namespace fbognini.WebFramework.SidebarMenu
                     foreach (var action in groupChild.Children)
                     {
                         var typeNamespace = string.IsNullOrWhiteSpace(action.Area)
-                            ? $"{controllerNamespace}.{action.Controller}Controller"
-                            : $"{areaNamespace}.{action.Area}.{action.Controller}Controller";
+                            ? $"{baseNamespace}.Controllers.{action.Controller}Controller"
+                            : $"{baseNamespace}.Areas.{action.Area}.Controllers.{action.Controller}Controller";
 
                         var controller = AppDomain.CurrentDomain.GetAssemblies()
                             .Select(assembly => assembly.GetType(typeNamespace)).FirstOrDefault(t => t != null);

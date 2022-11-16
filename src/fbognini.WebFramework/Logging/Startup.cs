@@ -191,7 +191,6 @@ namespace fbognini.WebFramework.Logging
             columnOptions.Store.Remove(StandardColumn.Properties);
 
             logger
-                //.ReadFrom.o
                 .WriteTo
                     .Logger(lc => lc.Filter.ByIncludingOnly(Matching.FromSource(typeof(RequestResponseLoggingMiddleware).FullName))
                                     .Filter.ByIncludingOnly(Matching.WithProperty(RequestResponseLoggingMiddleware.ApiLoggingProperty))
