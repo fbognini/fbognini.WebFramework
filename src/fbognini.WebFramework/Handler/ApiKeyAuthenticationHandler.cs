@@ -14,7 +14,6 @@ namespace fbognini.WebFramework.Authorization
     {
         private string failReason;
         private readonly IOptions<ApiKeyAuthenticationSettings> settings;
-        private readonly string ApiKeyHeaderName;
         public ApiKeyAuthenticationHandler(
             IOptionsMonitor<ApiKeyAuthenticationOptions> options,
             ILoggerFactory logger,
