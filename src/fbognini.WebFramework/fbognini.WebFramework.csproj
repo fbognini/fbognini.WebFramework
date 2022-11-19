@@ -3,9 +3,11 @@
   <PropertyGroup>
     <PackageId>fbognini.WebFramework</PackageId>
     <TargetFrameworks>net7.0;net6.0</TargetFrameworks>
-    <Version>6.4.4</Version>
+    <Version>6.4.5</Version>
     <Authors>Francesco Bognini</Authors>
     <Company>Francesco Bognini</Company>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageProjectUrl>https://github.com/fbognini/fbognini.WebFramework</PackageProjectUrl>
     <RepositoryUrl>https://github.com/fbognini/fbognini.WebFramework</RepositoryUrl>
   </PropertyGroup>
@@ -14,7 +16,7 @@
     
     <PackageReference Include="Cronos" Version="0.7.1" />
     
-    <PackageReference Include="fbognini.Core" Version="6.3.3" />    
+    <PackageReference Include="fbognini.Core" Version="6.3.4" />    
     <PackageReference Include="FluentValidation.AspNetCore" Version="11.2.2" />
 
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="5.0.0" />
@@ -37,6 +39,11 @@
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\LICENSE" Pack="true" PackagePath="" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="" />
   </ItemGroup>
 
 </Project>
