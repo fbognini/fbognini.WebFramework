@@ -80,27 +80,18 @@ namespace fbognini.WebFramework.Logging
 
         private async Task<long> DeletePreviousRows(string table, string schema, string column, DateTime date, int batch, CancellationToken cancellationToken)
         {
-            int times = (int)Math.Ceiling(5000.0 / batch);
-
             var sql = @$"
-DECLARE @BatchSize INT = 1, @Total BIGINT = 0
-SET rowcount {batch}
-WHILE @BatchSize <> 0 AND @Total < {batch * times}
-BEGIN
-	
-	DECLARE @sql NVARCHAR(MAX);
+DECLARE @Total INT = 0
+DECLARE @sql NVARCHAR(MAX);
 
-	SET @sql = '
-		DELETE FROM ' + QUOTENAME('{schema}') + '.' + QUOTENAME('{table}') + '
-		WHERE ' + QUOTENAME('{column}') + ' < @retentiondate'
+SET @sql = '
+	DELETE FROM ' + QUOTENAME('{schema}') + '.' + QUOTENAME('{table}') + '
+	WHERE ' + QUOTENAME('{column}') + ' < @retentiondate'
 
-	exec sp_executesql @sql, 
-                    N'@retentiondate datetime2(7)', @RetentionDate;
+exec sp_executesql @sql, 
+                N'@retentiondate datetime2(7)', @RetentionDate;
 
-	SET @BatchSize = @@rowcount
-	SET @Total = @Total + @BatchSize
-
-END
+SET @Total = @@rowcount
 
 SELECT @Total
 ";
@@ -139,7 +130,7 @@ SELECT @Total
 
                 logger.LogInformation("{rows} rows deleted from [{schema}].[{table}] in {seconds} seconds", total, settings.SchemaName, settings.TableName, watch.Elapsed.TotalSeconds);
 
-            } while (deleted == batch * times);
+            } while (deleted == batch);
 
 
             return total;
