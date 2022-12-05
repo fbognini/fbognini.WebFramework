@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -55,27 +56,36 @@ namespace fbognini.WebFramework.Logging
 
         private async Task DoWork(CancellationToken cancellationToken)
         {
-            logger.LogInformation("Manage retentions of {days} for [{schema}].[{table}]", settings.RetentionOptions.Days, settings.SchemaName, settings.TableName);
+            try
+            {
+                logger.LogInformation("Manage retentions of {days} for [{schema}].[{table}]", settings.RetentionOptions.Days, settings.SchemaName, settings.TableName);
 
-            ValidateSettings();
+                ValidateSettings();
 
-            var total = await DeletePreviousRows(
-                settings.TableName,
-                settings.SchemaName,
-                settings.ColumnName,
-                DateTime.Now.AddDays(-settings.RetentionOptions.Days),
-                settings.RetentionOptions.BatchSize,
-                cancellationToken);
+                var total = await DeletePreviousRows(
+                    settings.TableName,
+                    settings.SchemaName,
+                    settings.ColumnName,
+                    DateTime.Now.AddDays(-settings.RetentionOptions.Days),
+                    settings.RetentionOptions.BatchSize,
+                    cancellationToken);
 
-            logger.LogInformation("{rows} rows deleted from [{schema}].[{table}]", total, settings.SchemaName, settings.TableName);
+                logger.LogInformation("Successfully deleted {rows} rows deleted from [{schema}].[{table}]", total, settings.SchemaName, settings.TableName);
+            }
+            catch (SqlException ex)
+            {
+                logger.LogError(ex, "An SqlException occours during DeletePreviousRows from [{schema}].[{table}]", settings.SchemaName, settings.TableName);
+            }
         }
 
         private async Task<long> DeletePreviousRows(string table, string schema, string column, DateTime date, int batch, CancellationToken cancellationToken)
         {
+            int times = (int)Math.Ceiling(5000.0 / batch);
+
             var sql = @$"
 DECLARE @BatchSize INT = 1, @Total BIGINT = 0
 SET rowcount {batch}
-WHILE @BatchSize <> 0
+WHILE @BatchSize <> 0 AND @Total < {batch * times}
 BEGIN
 	
 	DECLARE @sql NVARCHAR(MAX);
@@ -95,31 +105,44 @@ END
 SELECT @Total
 ";
 
+            long total = 0, deleted;
+
             using SqlConnection connection = new(settings.ConnectionString);
-            // Create the command and set its properties.
-            SqlCommand command = new()
-            {
-                Connection = connection,
-                CommandText = sql,
-                CommandType = CommandType.Text
-            };
-
-            // Add the input parameter and set its properties.
-            SqlParameter parameter = new()
-            {
-                ParameterName = "@RetentionDate",
-                SqlDbType = SqlDbType.DateTime2,
-                Direction = ParameterDirection.Input,
-                Value = date
-            };
-
-            // Add the parameter to the Parameters collection.
-            command.Parameters.Add(parameter);
-
-            // Open the connection and execute the reader.
             connection.Open();
 
-            return (long)await command.ExecuteScalarAsync(cancellationToken);
+            do
+            {
+
+                SqlCommand command = new()
+                {
+                    Connection = connection,
+                    CommandText = sql,
+                    CommandType = CommandType.Text,
+                    CommandTimeout = 120,
+                };
+                command.Parameters.Add(new SqlParameter()
+                {
+                    ParameterName = "@RetentionDate",
+                    SqlDbType = SqlDbType.DateTime2,
+                    Direction = ParameterDirection.Input,
+                    Value = date
+                });
+
+                var watch = new Stopwatch();
+                watch.Start();
+
+                deleted = (long)await command.ExecuteScalarAsync(cancellationToken);
+
+                watch.Stop();
+
+                total += deleted;
+
+                logger.LogInformation("{rows} rows deleted from [{schema}].[{table}] in {seconds} seconds", total, settings.SchemaName, settings.TableName, watch.Elapsed.TotalSeconds);
+
+            } while (deleted == batch * times);
+
+
+            return total;
         }
 
         private void ValidateSettings()
