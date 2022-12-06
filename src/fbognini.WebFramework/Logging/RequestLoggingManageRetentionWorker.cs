@@ -81,7 +81,7 @@ namespace fbognini.WebFramework.Logging
         private async Task<long> DeletePreviousRows(string table, string schema, string column, DateTime date, int batch, CancellationToken cancellationToken)
         {
             var sql = @$"
-DECLARE @Total INT = 0
+DECLARE @Total BIGINT = 0
 DECLARE @sql NVARCHAR(MAX);
 
 SET @sql = '

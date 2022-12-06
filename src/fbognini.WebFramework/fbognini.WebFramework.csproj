@@ -3,7 +3,7 @@
   <PropertyGroup>
     <PackageId>fbognini.WebFramework</PackageId>
     <TargetFrameworks>net7.0;net6.0</TargetFrameworks>
-    <Version>6.4.7</Version>
+    <Version>6.4.8</Version>
     <Authors>Francesco Bognini</Authors>
     <Company>Francesco Bognini</Company>
     <PackageReadmeFile>README.md</PackageReadmeFile>
