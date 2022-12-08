@@ -12,7 +12,9 @@ namespace fbognini.WebFramework.Logging
     public enum RequestAdditionalParameterType
     {
         Query,
-        Header
+        Header,
+        Session,
+        Cookie
     }
 
     public class RequestAdditionalParameter

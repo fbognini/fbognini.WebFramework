@@ -52,7 +52,6 @@ namespace fbognini.WebFramework.Logging
             return services.AddOptions<RequestLoggingSettings>();
         }
 
-
         public static OptionsBuilder<RequestLoggingSettings> IgnoreMvcResponses(this OptionsBuilder<RequestLoggingSettings> optionsBuilder)
         {
             optionsBuilder
@@ -94,51 +93,13 @@ namespace fbognini.WebFramework.Logging
         {
             var additionalColumns = new List<SqlColumn>()
                 {
+                    new SqlColumn("RequestId", System.Data.SqlDbType.NVarChar, false, 50),
                     new SqlColumn("Schema", System.Data.SqlDbType.NVarChar, false, 10),
                     new SqlColumn("Host", System.Data.SqlDbType.NVarChar, false, 200),
                     new SqlColumn("Path", System.Data.SqlDbType.NVarChar, false, 200),
                     new SqlColumn("Area", System.Data.SqlDbType.NVarChar, true, 50),
-                    new SqlColumn("Controller", System.Data.SqlDbType.NVarChar, false, 50),
-                    new SqlColumn("Action", System.Data.SqlDbType.NVarChar, false, 50),
-                    new SqlColumn("Query", System.Data.SqlDbType.NVarChar, false),
-                    new SqlColumn("Method", System.Data.SqlDbType.NVarChar, false, 10),
-                    new SqlColumn("RequestContentType", System.Data.SqlDbType.NVarChar, true, 50),
-                    new SqlColumn("RequestContentLength", System.Data.SqlDbType.BigInt, true),
-                    new SqlColumn("RequestDate", System.Data.SqlDbType.DateTime2, false),
-                    new SqlColumn("Request", System.Data.SqlDbType.NVarChar, false, -1),
-                    new SqlColumn("ResponseContentType", System.Data.SqlDbType.NVarChar, true, 50),
-                    new SqlColumn("ResponseContentLength", System.Data.SqlDbType.BigInt, true),
-                    new SqlColumn("ResponseDate", System.Data.SqlDbType.DateTime2, false),
-                    new SqlColumn("Response", System.Data.SqlDbType.NVarChar, true, -1),
-                    new SqlColumn("ElapsedMilliseconds", System.Data.SqlDbType.Float, false),
-                    new SqlColumn("StatusCode", System.Data.SqlDbType.Int, false),
-                    new SqlColumn("Ip", System.Data.SqlDbType.NVarChar, false, 20),
-                    new SqlColumn("Origin", System.Data.SqlDbType.NVarChar, false, 400),
-                    new SqlColumn("UserAgent", System.Data.SqlDbType.NVarChar, false, 1000),
-                    new SqlColumn("UserId", System.Data.SqlDbType.NVarChar, true, 100)
-                };
-
-            return logger.WriteRequestToSqlServer(additionalColumns, connectionstring, tableName, schemaName, parameters);
-        }
-
-
-        public static LoggerConfiguration WriteMvcRequestToSqlServer(this LoggerConfiguration logger, IServiceProvider serviceProvider)
-        {
-            var settings = serviceProvider.GetService<IOptions<RequestLoggingSettings>>().Value;
-
-            return logger.WriteMvcRequestToSqlServer(settings.ConnectionString, settings.TableName, settings.SchemaName, settings.AdditionalParameters);
-        }
-
-        public static LoggerConfiguration WriteMvcRequestToSqlServer(this LoggerConfiguration logger, string connectionstring, string tableName, string schemaName, IEnumerable<RequestAdditionalParameter> parameters = null)
-        {
-            var additionalColumns = new List<SqlColumn>()
-                {
-                    new SqlColumn("Schema", System.Data.SqlDbType.NVarChar, false, 10),
-                    new SqlColumn("Host", System.Data.SqlDbType.NVarChar, false, 200),
-                    new SqlColumn("Path", System.Data.SqlDbType.NVarChar, false, 200),
-                    new SqlColumn("Area", System.Data.SqlDbType.NVarChar, true, 50),
-                    new SqlColumn("Controller", System.Data.SqlDbType.NVarChar, false, 50),
-                    new SqlColumn("Action", System.Data.SqlDbType.NVarChar, false, 50),
+                    new SqlColumn("Controller", System.Data.SqlDbType.NVarChar, true, 50),
+                    new SqlColumn("Action", System.Data.SqlDbType.NVarChar, true, 50),
                     new SqlColumn("Query", System.Data.SqlDbType.NVarChar, false),
                     new SqlColumn("Method", System.Data.SqlDbType.NVarChar, false, 10),
                     new SqlColumn("RequestContentType", System.Data.SqlDbType.NVarChar, true, 50),
@@ -162,20 +123,15 @@ namespace fbognini.WebFramework.Logging
                     new SqlColumn("UserId", System.Data.SqlDbType.NVarChar, true, 100)
                 };
 
-            return logger.WriteRequestToSqlServer(additionalColumns, connectionstring, tableName, schemaName, parameters);
-        }
-
-        private static LoggerConfiguration WriteRequestToSqlServer(this LoggerConfiguration logger, List<SqlColumn> additionalColumns, string connectionstring, string tableName, string schemaName, IEnumerable<RequestAdditionalParameter> parameters = null)
-        {
             if (parameters != null)
             {
                 additionalColumns.AddRange(parameters.Select(x => x.SqlColumn));
             }
 
-            var sinkOptions = new MSSqlServerSinkOptions 
-            { 
-                AutoCreateSqlTable = true, 
-                TableName = tableName, 
+            var sinkOptions = new MSSqlServerSinkOptions
+            {
+                AutoCreateSqlTable = true,
+                TableName = tableName,
                 SchemaName = schemaName
             };
             var columnOptions = new ColumnOptions()

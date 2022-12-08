@@ -11,6 +11,7 @@ using Microsoft.IO;
 using Microsoft.Net.Http.Headers;
 using Serilog;
 using Serilog.Context;
+using Serilog.Core;
 using Serilog.Filters;
 using Serilog.Sinks.MSSqlServer;
 using System;
@@ -59,16 +60,6 @@ namespace fbognini.WebFramework.Middlewares
                 return;
             }
 
-            var controllerActionDescriptor = endpoint
-                .Metadata
-                .GetMetadata<ControllerActionDescriptor>();
-
-            if (controllerActionDescriptor == null || string.IsNullOrWhiteSpace(controllerActionDescriptor.ControllerName) || string.IsNullOrWhiteSpace(controllerActionDescriptor.ActionName))
-            {
-                await next(context);
-                return;
-            }
-
             var ignoreLogging = endpoint.Metadata.OfType<IgnoreRequestLoggingAttribute>().LastOrDefault();
             if (ignoreLogging != null && ignoreLogging.IgnoreLogging)
             {
@@ -76,41 +67,24 @@ namespace fbognini.WebFramework.Middlewares
                 return;
             }
 
-            var controller = controllerActionDescriptor.ControllerName;
-            var action = controllerActionDescriptor.ActionName;
-            var area = controllerActionDescriptor.RouteValues.ContainsKey("area")
-                ? controllerActionDescriptor.RouteValues["area"]
-                : null;
-
             var propertys = new Dictionary<string, object>()
             {
-                [ApiLoggingProperty] = true
+                [ApiLoggingProperty] = true,
             };
+
+            var controllerActionDescriptor = endpoint
+                .Metadata
+                .GetMetadata<ControllerActionDescriptor>();
+
+            if (controllerActionDescriptor != null)
+            {
+                propertys.Add("Area", controllerActionDescriptor.RouteValues.TryGetValue("area", out string _area) ? _area : null);
+                propertys.Add("Controller", controllerActionDescriptor.ControllerName);
+                propertys.Add("Action", controllerActionDescriptor.ActionName);
+            }
 
             try
             {
-                foreach (var parameter in AdditionalParameters)
-                {
-                    var value = GetValue();
-                    if (value == null && !parameter.SqlColumn.AllowNull)
-                    {
-                        await next(context);
-                        return;
-                    }
-
-                    propertys.Add(parameter.Parameter, value);
-
-                    string GetValue()
-                    {
-                        if (parameter.Type == RequestAdditionalParameterType.Query)
-                        {
-                            return context.Request.Query.ContainsKey(parameter.Parameter) ? context.Request.Query[parameter.Parameter].ToString() : default;
-                        }
-
-                        return context.Request.Headers.ContainsKey(parameter.Parameter) ? context.Request.Headers[parameter.Parameter].ToString() : default;
-                    }
-                }
-
                 var requestDate = DateTime.UtcNow;
                 var currentUserService = context.RequestServices.GetRequiredService<ICurrentUserService>();
 
@@ -132,12 +106,32 @@ namespace fbognini.WebFramework.Middlewares
 
                 try
                 {
+                    foreach (var parameter in AdditionalParameters)
+                    {
+                        var value = GetValue(parameter);
+                        if (value == null && parameter.SqlColumn.AllowNull == false)
+                        {
+                            logger.LogWarning("Expected {parameter} in {type} but no value provided", parameter.Parameter, parameter.Type.ToString());
+                        }
+
+                        propertys.Add(parameter.SqlColumn.PropertyName, value);
+
+                        string GetValue(RequestAdditionalParameter parameter) => parameter.Type switch
+                        {
+                            RequestAdditionalParameterType.Query => context.Request.Query.TryGetValue(parameter.Parameter, out var _value) ? _value : default,
+                            RequestAdditionalParameterType.Header => context.Request.Headers.TryGetValue(parameter.Parameter, out var _value) ? _value : default,
+                            RequestAdditionalParameterType.Session => parameter.Parameter.Equals("__id__", StringComparison.InvariantCultureIgnoreCase)
+                             ? context.Session.Id
+                             : context.Session.GetString(parameter.Parameter),
+                            RequestAdditionalParameterType.Cookie => context.Request.Cookies.TryGetValue(parameter.Parameter, out var _value) ? _value : default,
+                            _ => throw new ArgumentException($"{parameter.Type} is not a valid value", nameof(parameter))
+                        };
+                    }
+
+                    // RequestId populated by serilog
                     propertys.Add("Schema", context.Request.Scheme);
                     propertys.Add("Host", context.Request.Host.Value);
                     propertys.Add("Path", context.Request.Path.Value);
-                    propertys.Add("Area", area);
-                    propertys.Add("Controller", controller);
-                    propertys.Add("Action", action);
                     propertys.Add("Query", context.Request.QueryString.Value);
                     propertys.Add("Method", context.Request.Method);
                     propertys.Add("RequestContentType", context.Request.ContentType);
@@ -164,19 +158,19 @@ namespace fbognini.WebFramework.Middlewares
 
                     using (logger.BeginScope(propertys))
                     {
-                        logger.LogInformation("HTTP {method} {path}{querystring} responded {statuscode} in {elapsed} ms", context.Request.Method, context.Request.Path.Value, context.Request.QueryString.Value, context.Response.StatusCode, elapsedMilliseconds);
+                        logger.LogInformation("HTTP {Method} {Path}{Query} responded {StatusCode} in {ElapsedMilliseconds} ms", context.Request.Method, context.Request.Path.Value, context.Request.QueryString.Value, context.Response.StatusCode, elapsedMilliseconds);
                     }
                 }
                 catch (Exception ex)
                 {
-                    logger.LogWarning(ex, "Unexpeted error during logging web request {path}{query}", context.Request.Path.Value, context.Request.QueryString.Value);
+                    logger.LogWarning(ex, "Unexpeted error during logging web request {Path}{Query}", context.Request.Path.Value, context.Request.QueryString.Value);
                 }
 
                 await responseBody.CopyToAsync(originalResponseBody);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Unexpeted error during logging web request {path}{query}", context.Request.Path.Value, context.Request.QueryString.Value);
+                logger.LogError(ex, "Unexpeted error during logging web request {Path}{Query}", context.Request.Path.Value, context.Request.QueryString.Value);
                 throw;
             }
         }
