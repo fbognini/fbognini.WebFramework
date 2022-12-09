@@ -3,25 +3,15 @@ using fbognini.WebFramework.Filters;
 using fbognini.WebFramework.Logging;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
-using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IO;
 using Microsoft.Net.Http.Headers;
-using Serilog;
-using Serilog.Context;
-using Serilog.Core;
-using Serilog.Filters;
-using Serilog.Sinks.MSSqlServer;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Net;
-using System.Reflection;
-using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -85,6 +75,8 @@ namespace fbognini.WebFramework.Middlewares
 
             try
             {
+                AddAdditionalParameters(AdditionalParameters);
+
                 var requestDate = DateTime.UtcNow;
                 var currentUserService = context.RequestServices.GetRequiredService<ICurrentUserService>();
 
@@ -106,27 +98,7 @@ namespace fbognini.WebFramework.Middlewares
 
                 try
                 {
-                    foreach (var parameter in AdditionalParameters)
-                    {
-                        var value = GetValue(parameter);
-                        if (value == null && parameter.SqlColumn.AllowNull == false)
-                        {
-                            logger.LogWarning("Expected {parameter} in {type} but no value provided", parameter.Parameter, parameter.Type.ToString());
-                        }
-
-                        propertys.Add(parameter.SqlColumn.PropertyName, value);
-
-                        string GetValue(RequestAdditionalParameter parameter) => parameter.Type switch
-                        {
-                            RequestAdditionalParameterType.Query => context.Request.Query.TryGetValue(parameter.Parameter, out var _value) ? _value : default,
-                            RequestAdditionalParameterType.Header => context.Request.Headers.TryGetValue(parameter.Parameter, out var _value) ? _value : default,
-                            RequestAdditionalParameterType.Session => parameter.Parameter.Equals("__id__", StringComparison.InvariantCultureIgnoreCase)
-                             ? context.Session.Id
-                             : context.Session.GetString(parameter.Parameter),
-                            RequestAdditionalParameterType.Cookie => context.Request.Cookies.TryGetValue(parameter.Parameter, out var _value) ? _value : default,
-                            _ => throw new ArgumentException($"{parameter.Type} is not a valid value", nameof(parameter))
-                        };
-                    }
+                    AddAdditionalParameters(AdditionalParameters.Where(x => x.Type == RequestAdditionalParameterType.Session), true);
 
                     // RequestId populated by serilog
                     propertys.Add("Schema", context.Request.Scheme);
@@ -172,6 +144,40 @@ namespace fbognini.WebFramework.Middlewares
             {
                 logger.LogError(ex, "Unexpeted error during logging web request {Path}{Query}", context.Request.Path.Value, context.Request.QueryString.Value);
                 throw;
+            }
+
+            void AddAdditionalParameters(IEnumerable<RequestAdditionalParameter> parameters, bool update = false)
+            {
+                foreach (var parameter in parameters)
+                {
+                    var value = GetValue(parameter);
+                    if (value == null && parameter.SqlColumn.AllowNull == false)
+                    {
+                        logger.LogWarning("Expected {parameter} in {type} but no value provided", parameter.Parameter, parameter.Type.ToString());
+                    }
+
+                    if (update == false || propertys.ContainsKey(parameter.SqlColumn.PropertyName) == false)
+                    {
+                        propertys.Add(parameter.SqlColumn.PropertyName, value);
+                        continue;
+                    }
+                    
+                    if (string.IsNullOrWhiteSpace(value) == false)
+                    {
+                        propertys[parameter.SqlColumn.PropertyName] = value;
+                    }
+
+                    string GetValue(RequestAdditionalParameter parameter) => parameter.Type switch
+                    {
+                        RequestAdditionalParameterType.Query => context.Request.Query.TryGetValue(parameter.Parameter, out var _value) ? _value : default,
+                        RequestAdditionalParameterType.Header => context.Request.Headers.TryGetValue(parameter.Parameter, out var _value) ? _value : default,
+                        RequestAdditionalParameterType.Session => parameter.Parameter.Equals("__id__", StringComparison.InvariantCultureIgnoreCase)
+                         ? context.Session.Id
+                         : context.Session.GetString(parameter.Parameter),
+                        RequestAdditionalParameterType.Cookie => context.Request.Cookies.TryGetValue(parameter.Parameter, out var _value) ? _value : default,
+                        _ => throw new ArgumentException($"{parameter.Type} is not a valid value", nameof(parameter))
+                    };
+                }
             }
         }
 
