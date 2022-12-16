@@ -22,7 +22,6 @@ public static class Startup
             return services;
         }
 
-        services.AddVersionedApiExplorer(o => o.SubstituteApiVersionInUrl = true);
         services.AddEndpointsApiExplorer();
         services.AddOpenApiDocument((document, serviceProvider) =>
         {
