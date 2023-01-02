@@ -99,10 +99,8 @@ namespace fbognini.WebFramework.Middlewares
                 {
                     SetExceptionMessage(exception);
                 }
-                else
-                {
-                    logger.LogError(exception, "Generic exception {message} for user {user} during request {path}", exception.Message, currentUserService.UserId, context.Request.Path);
-                }
+                    
+                logger.LogError(exception, "Generic exception {message} for user {user} during request {path}", exception.Message, currentUserService.UserId, context.Request.Path);
 
                 await WriteToResponseAsync();
             }
@@ -113,7 +111,7 @@ namespace fbognini.WebFramework.Middlewares
                     throw new InvalidOperationException("The response has already started, the http status code middleware will not be executed.");
 
                 var result = new ApiResult(false, httpStatusCode, message, validations, additionalData);
-                var json = JsonSerializer.Serialize(result);
+                var json = JsonSerializer.Serialize(result, new JsonSerializerOptions(JsonSerializerDefaults.Web));
 
                 context.Response.StatusCode = (int)httpStatusCode;
                 context.Response.ContentType = "application/json";

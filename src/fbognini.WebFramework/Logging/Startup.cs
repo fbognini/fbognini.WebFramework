@@ -150,14 +150,15 @@ namespace fbognini.WebFramework.Logging
                 .WriteTo
                     .Logger(lc => lc.Filter.ByIncludingOnly(Matching.FromSource(typeof(RequestResponseLoggingMiddleware).FullName))
                                     .Filter.ByIncludingOnly(Matching.WithProperty(RequestResponseLoggingMiddleware.ApiLoggingProperty))
-                    .WriteTo
-                        .MSSqlServer(
-                            connectionstring,
-                            sinkOptions,
-                            restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information,
-                            columnOptions: columnOptions
-                        )
-                    );
+                                    .Filter.ByIncludingOnly(Matching.WithProperty("Response"))
+                        .WriteTo
+                            .MSSqlServer(
+                                connectionstring,
+                                sinkOptions,
+                                restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information,
+                                columnOptions: columnOptions
+                            )
+                        );
 
             return logger;
         }

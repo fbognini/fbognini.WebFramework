@@ -57,6 +57,12 @@ namespace fbognini.WebFramework.Middlewares
                 return;
             }
 
+            if (context.Request.Method.Equals("OPTIONS", StringComparison.InvariantCultureIgnoreCase))
+            {
+                await next(context);
+                return;
+            }
+
             var propertys = new Dictionary<string, object>()
             {
                 [ApiLoggingProperty] = true,
@@ -82,6 +88,26 @@ namespace fbognini.WebFramework.Middlewares
 
                 string request = await ReadRequest(context, ignoreLogging);
 
+                // RequestId populated by serilog
+                propertys.Add("Schema", context.Request.Scheme);
+                propertys.Add("Host", context.Request.Host.Value);
+                propertys.Add("Path", context.Request.Path.Value);
+                propertys.Add("Query", context.Request.QueryString.Value);
+                propertys.Add("Method", context.Request.Method);
+                propertys.Add("RequestContentType", context.Request.ContentType);
+                propertys.Add("RequestContentLength", context.Request.ContentLength);
+                propertys.Add("RequestDate", requestDate);
+                propertys.Add("Request", request);
+                propertys.Add("Origin", context.Request.Headers["origin"].ToString());
+                propertys.Add("Ip", context.Connection.RemoteIpAddress.ToString());
+                propertys.Add("UserAgent", context.Request.Headers[HeaderNames.UserAgent].ToString());
+                propertys.Add("UserId", currentUserService.UserId);
+
+                using (logger.BeginScope(propertys))
+                {
+                    logger.LogInformation("HTTP {Method} {Path}{Query} requested", context.Request.Method, context.Request.Path.Value, context.Request.QueryString.Value);
+                }
+
                 var originalResponseBody = context.Response.Body;
 
                 await using var responseBody = recyclableMemoryStreamManager.GetStream();
@@ -100,20 +126,6 @@ namespace fbognini.WebFramework.Middlewares
                 {
                     AddAdditionalParameters(AdditionalParameters.Where(x => x.Type == RequestAdditionalParameterType.Session), true);
 
-                    // RequestId populated by serilog
-                    propertys.Add("Schema", context.Request.Scheme);
-                    propertys.Add("Host", context.Request.Host.Value);
-                    propertys.Add("Path", context.Request.Path.Value);
-                    propertys.Add("Query", context.Request.QueryString.Value);
-                    propertys.Add("Method", context.Request.Method);
-                    propertys.Add("RequestContentType", context.Request.ContentType);
-                    propertys.Add("RequestContentLength", context.Request.ContentLength);
-                    propertys.Add("RequestDate", requestDate);
-                    propertys.Add("Request", request);
-                    propertys.Add("Origin", context.Request.Headers["origin"].ToString());
-                    propertys.Add("Ip", context.Connection.RemoteIpAddress.ToString());
-                    propertys.Add("UserAgent", context.Request.Headers[HeaderNames.UserAgent].ToString());
-                    propertys.Add("UserId", currentUserService.UserId);
                     propertys.Add("ResponseContentType", context.Response.ContentType);
                     propertys.Add("ResponseContentLength", context.Response.ContentLength);
                     propertys.Add("ResponseDate", responseDate);
