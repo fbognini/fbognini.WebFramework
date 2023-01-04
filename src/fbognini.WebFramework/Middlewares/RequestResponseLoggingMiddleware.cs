@@ -57,7 +57,8 @@ namespace fbognini.WebFramework.Middlewares
                 return;
             }
 
-            if (context.Request.Method.Equals("OPTIONS", StringComparison.InvariantCultureIgnoreCase))
+            if (context.Request.Method.Equals("OPTIONS", StringComparison.InvariantCultureIgnoreCase)
+                || context.Request.Method.Equals("HEAD", StringComparison.InvariantCultureIgnoreCase))
             {
                 await next(context);
                 return;
