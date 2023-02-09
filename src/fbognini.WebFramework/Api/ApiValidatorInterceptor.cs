@@ -3,7 +3,7 @@ using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using System.Linq;  
-using ValidationException = fbognini.FluentValidation.Exceptions.ValidationException;
+using ValidationException = fbognini.WebFramework.Validation.ValidationException;
 using ValidationResult = FluentValidation.Results.ValidationResult;
 
 namespace fbognini.WebFramework

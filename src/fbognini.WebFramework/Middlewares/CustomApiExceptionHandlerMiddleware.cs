@@ -15,9 +15,9 @@ using fbognini.WebFramework.Api;
 using System.IO;
 using Microsoft.IdentityModel.Tokens;
 using fbognini.Core.Interfaces;
-using fbognini.FluentValidation.Exceptions;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
+using fbognini.WebFramework.Validation;
 
 namespace fbognini.WebFramework.Middlewares
 {

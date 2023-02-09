@@ -41,16 +41,6 @@ namespace fbognini.WebFramework.Api
         {
             return new ApiResult(false, HttpStatusCode.BadRequest);
         }
-
-        public static implicit operator ApiResult(Result result)
-        {
-            var httpStatusCode = Enum.IsDefined(typeof(HttpStatusCode), result.StatusCode)
-                ? (HttpStatusCode)result.StatusCode
-                : result.IsSuccess ? HttpStatusCode.OK : HttpStatusCode.InternalServerError;
-
-            return new ApiResult(result.IsSuccess, httpStatusCode, result.Message);
-        }
-
     }
 
     public class ApiResult<TResponse> : ApiResult
@@ -70,18 +60,10 @@ namespace fbognini.WebFramework.Api
         }
 
         #region Implicit Operators
+
         public static implicit operator ApiResult<TResponse>(TResponse data)
         {
             return new ApiResult<TResponse>(true, HttpStatusCode.OK, data);
-        }
-
-        public static implicit operator ApiResult<TResponse>(Result<TResponse> result)
-        {
-            var httpStatusCode = Enum.IsDefined(typeof(HttpStatusCode), result.StatusCode)
-                ? (HttpStatusCode)result.StatusCode
-                : result.IsSuccess ? HttpStatusCode.OK : HttpStatusCode.InternalServerError;
-
-            return new ApiResult<TResponse>(result.IsSuccess, httpStatusCode, result.Data);
         }
 
         public static implicit operator ApiResult<TResponse>(OkResult result)
