@@ -19,21 +19,17 @@ using System.Threading.Tasks;
 #if NET7_0
 namespace fbognini.WebFramework.Handlers
 {
-    public class GenericExceptionHandler<TRequest, TResponse, TException> : IRequestExceptionHandler<TRequest, IResult, Exception>
+    public class GenericExceptionHandler<TRequest, TResponse, TException> : RequestExceptionHandler<TRequest, IResult>
         where TRequest : IHttpRequest
         where TResponse : IResult
         where TException : Exception
     {
-        public Task Handle(TRequest request,
-            Exception exception,
-            RequestExceptionHandlerState<IResult> state,
-            CancellationToken cancellationToken)
+
+        protected override void Handle(TRequest request, Exception exception, RequestExceptionHandlerState<IResult> state)
         {
             var result = HandleException(exception);
 
             state.SetHandled(result);
-
-            return Task.CompletedTask;
         }
 
         protected virtual IResult HandleException(Exception exception)

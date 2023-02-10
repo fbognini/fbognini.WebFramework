@@ -18,22 +18,7 @@ namespace fbognini.WebFramework.Handlers
     {
         public static IServiceCollection AddMediatRExceptionHandler(this IServiceCollection services)
         {
-            services.AddMediatRExceptionHandler(typeof(GenericExceptionHandler<,,>));
-            return services;
-        }
-
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="services"></param>
-        /// <param name="type">typeof(GenericExceptionHandler<,,>)</param>
-        /// <returns></returns>
-        public static IServiceCollection AddMediatRExceptionHandler(this IServiceCollection services, Type type)
-        {
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestExceptionProcessorBehavior<,>));
-            services.AddScoped(typeof(IRequestExceptionHandler<,,>), type);
-
             return services;
         }
     }

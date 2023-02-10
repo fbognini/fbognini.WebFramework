@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace fbognini.WebFramework.Handlers
+namespace fbognini.WebFramework.Handlers.Problems
 {
     public class DetailedValidationProblemDetails : ProblemDetails
     {

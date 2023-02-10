@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using FluentValidation;
+using MediatR;
 using MediatR.Pipeline;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,7 +21,19 @@ namespace fbognini.WebFramework.Behaviours
             return services;
         }
 
-        public static IServiceCollection AddIHttpRequestValidationBehavior(this IServiceCollection services) =>
-            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(IHttpRequestValidationBehavior<,>));
+        public static IServiceCollection AddIHttpRequestValidationBehavior(this IServiceCollection services) 
+        {
+            ValidatorOptions.Global.DefaultClassLevelCascadeMode = CascadeMode.Stop;
+            ValidatorOptions.Global.DisplayNameResolver = (type, member, expression) =>
+            {
+                if (member != null)
+                {
+                    return member.Name;
+                }
+
+                return null;
+            };
+            return services.AddTransient(typeof(IPipelineBehavior<,>), typeof(IHttpRequestValidationBehavior<,>));
+        }
     }
 }

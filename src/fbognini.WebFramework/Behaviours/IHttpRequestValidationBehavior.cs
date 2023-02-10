@@ -1,4 +1,5 @@
 ﻿using fbognini.WebFramework.Handlers;
+using fbognini.WebFramework.Handlers.Problems;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
