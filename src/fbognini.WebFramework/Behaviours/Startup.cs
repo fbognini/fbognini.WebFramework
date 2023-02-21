@@ -15,12 +15,17 @@ namespace fbognini.WebFramework.Behaviours
 {
     public static class Startup
     {
-        public static IServiceCollection AddMediatR(this IServiceCollection services, params Type[] handlerAssemblyMarkerTypes)
+        public static IServiceCollection AddScopedMediatR(this IServiceCollection services, params Type[] handlerAssemblyMarkerTypes)
         {
             services.AddMediatR(x => x.AsScoped(), handlerAssemblyMarkerTypes);
             return services;
         }
+        public static IServiceCollection AddScopedMediatR<TMarker>(this IServiceCollection services) => services.AddScopedMediatR(typeof(TMarker));
 
+        public static IServiceCollection AddRequestLogger(this IServiceCollection services) => services.AddTransient(typeof(IRequestPreProcessor<>), typeof(RequestLogger<>));
+        
+        public static IServiceCollection AddRequestPerformanceBehaviour(this IServiceCollection services) => services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestPerformanceBehaviour<,>));
+        public static IServiceCollection AddRequestValidationBehavior(this IServiceCollection services) => services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestValidationBehavior<,>));
         public static IServiceCollection AddIHttpRequestValidationBehavior(this IServiceCollection services) 
         {
             ValidatorOptions.Global.DefaultClassLevelCascadeMode = CascadeMode.Stop;

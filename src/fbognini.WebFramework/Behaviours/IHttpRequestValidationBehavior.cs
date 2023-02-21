@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace fbognini.WebFramework.Behaviours
 {
-    public class IHttpRequestValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, IResult>
+    internal class IHttpRequestValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, IResult>
         where TRequest : IHttpRequest
         where TResponse : IResult
     {

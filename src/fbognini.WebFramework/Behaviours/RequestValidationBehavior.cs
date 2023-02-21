@@ -8,7 +8,7 @@ using ValidationException = fbognini.WebFramework.Validation.ValidationException
 
 namespace fbognini.WebFramework.Behaviours
 {
-    public class RequestValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+    internal class RequestValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
         where TRequest : IRequest<TResponse>
     {
         private readonly IEnumerable<IValidator<TRequest>> _validators;

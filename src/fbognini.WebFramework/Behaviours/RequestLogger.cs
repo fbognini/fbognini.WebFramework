@@ -5,8 +5,9 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace fbognini.WebFramework.Behaviours
-{
-    public class RequestLogger<TRequest> : IRequestPreProcessor<TRequest>
+{   
+    internal class RequestLogger<TRequest> : IRequestPreProcessor<TRequest> 
+        where TRequest : notnull
     {
         private readonly ILogger logger;
         private readonly ICurrentUserService currentUserService;
@@ -19,10 +20,12 @@ namespace fbognini.WebFramework.Behaviours
             this.currentUserService = currentUserService;
         }
 
-        public async Task Process(TRequest request, CancellationToken cancellationToken)
+        public Task Process(TRequest request, CancellationToken cancellationToken)
         {
             logger.LogDebug("Request: {Name} {@UserId} {@Request}",
                 typeof(TRequest).Name, currentUserService.UserName, request);
+
+            return Task.CompletedTask;
         }
     }
 }

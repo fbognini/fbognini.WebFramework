@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace fbognini.WebFramework.Behaviours
 {
-    public class RequestPerformanceBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+    internal class RequestPerformanceBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
         where TRequest : IRequest<TResponse>
     {
         private readonly Stopwatch _timer;
