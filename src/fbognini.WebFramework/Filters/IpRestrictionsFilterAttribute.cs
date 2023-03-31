@@ -29,7 +29,7 @@ namespace fbognini.WebFramework.Filters
 
             var logger = context.RequestServices.GetRequiredService<ILogger<IpRestrictionsFilterAttribute>>();
 
-            logger.LogWarning("request to {path} has been blocked from {ip}", context.Request.Path, ip);
+            logger.LogWarning("Request to {Path} has been blocked from {Ip}", context.Request.Path, ip);
             actionContext.Result = new StatusCodeResult(StatusCodes.Status403Forbidden);
         }
     }

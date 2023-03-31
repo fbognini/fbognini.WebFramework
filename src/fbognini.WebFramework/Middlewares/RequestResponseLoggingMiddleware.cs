@@ -85,7 +85,6 @@ namespace fbognini.WebFramework.Middlewares
                 AddAdditionalParameters(AdditionalParameters);
 
                 var requestDate = DateTime.UtcNow;
-                var currentUserService = context.RequestServices.GetRequiredService<ICurrentUserService>();
 
                 string request = await ReadRequest(context, ignoreLogging);
 
@@ -102,7 +101,6 @@ namespace fbognini.WebFramework.Middlewares
                 propertys.Add("Origin", context.Request.Headers["origin"].ToString());
                 propertys.Add("Ip", context.Connection.RemoteIpAddress.ToString());
                 propertys.Add("UserAgent", context.Request.Headers[HeaderNames.UserAgent].ToString());
-                propertys.Add("UserId", currentUserService.UserId);
 
                 using (logger.BeginScope(propertys))
                 {
@@ -125,6 +123,9 @@ namespace fbognini.WebFramework.Middlewares
 
                 try
                 {
+                    var currentUserService = context.RequestServices.GetRequiredService<ICurrentUserService>();
+                    propertys.Add("UserId", currentUserService.UserId);
+
                     AddAdditionalParameters(AdditionalParameters.Where(x => x.Type == RequestAdditionalParameterType.Session), true);
 
                     propertys.Add("ResponseContentType", context.Response.ContentType);

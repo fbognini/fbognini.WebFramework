@@ -163,7 +163,7 @@ namespace fbognini.WebFramework.Logging
             return logger;
         }
 
-        public static IApplicationBuilder UseRequestLogging(this IApplicationBuilder app)
+        public static IApplicationBuilder UseRequestResponseLogging(this IApplicationBuilder app)
         {
             app.UseMiddleware<RequestResponseLoggingMiddleware>();
             return app;

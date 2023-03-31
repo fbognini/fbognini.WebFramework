@@ -85,7 +85,7 @@ DECLARE @Total BIGINT = 0
 DECLARE @sql NVARCHAR(MAX);
 
 SET @sql = '
-	DELETE FROM ' + QUOTENAME('{schema}') + '.' + QUOTENAME('{table}') + '
+	DELETE TOP({batch}) FROM ' + QUOTENAME('{schema}') + '.' + QUOTENAME('{table}') + '
 	WHERE ' + QUOTENAME('{column}') + ' < @retentiondate'
 
 exec sp_executesql @sql, 
@@ -130,7 +130,7 @@ SELECT @Total
 
                 logger.LogInformation("{rows} rows deleted from [{schema}].[{table}] in {seconds} seconds", total, settings.SchemaName, settings.TableName, watch.Elapsed.TotalSeconds);
 
-            } while (deleted == batch);
+            } while (deleted != 0);
 
 
             return total;
