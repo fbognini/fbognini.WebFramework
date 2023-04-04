@@ -27,11 +27,11 @@ namespace fbognini.WebFramework.Plugins.DataTables
             }
             else
             {
-                RecordsTotal = response.Response.Count;
-                RecordsFiltered = response.Response.Count;
+                RecordsTotal = response.Items.Count;
+                RecordsFiltered = response.Items.Count;
             }
 
-            Data = response.Response;
+            Data = response.Items;
         }
 
 

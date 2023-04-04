@@ -3,7 +3,7 @@
   <PropertyGroup>
     <PackageId>fbognini.WebFramework</PackageId>
     <TargetFrameworks>net7.0;net6.0</TargetFrameworks>
-    <Version>7.0.4</Version>
+    <Version>7.1.0</Version>
     <Authors>Francesco Bognini</Authors>
     <Company>Francesco Bognini</Company>
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -17,7 +17,8 @@
     
     <PackageReference Include="Cronos" Version="0.7.1" />
     
-    <PackageReference Include="fbognini.Core" Version="7.0.0" />    
+    <PackageReference Include="fbognini.Core" Version="7.1.0" />
+    
     <PackageReference Include="FluentValidation.AspNetCore" Version="11.2.2" />
     
     <PackageReference Include="MediatR" Version="11.0.0" />

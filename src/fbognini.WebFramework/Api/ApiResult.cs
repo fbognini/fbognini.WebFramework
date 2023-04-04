@@ -128,7 +128,7 @@ namespace fbognini.WebFramework.Api
             : base(isSuccess, statusCode, message)
         {
             Pagination = pagination.Pagination;
-            Response = pagination.Response;
+            Response = pagination.Items;
         }
 
         #region Implicit Operators
