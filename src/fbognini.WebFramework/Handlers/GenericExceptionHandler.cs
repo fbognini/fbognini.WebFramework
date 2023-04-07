@@ -1,5 +1,4 @@
 ﻿using Azure;
-using DnsClient.Internal;
 using fbognini.Core.Exceptions;
 using fbognini.WebFramework.Api;
 using fbognini.WebFramework.Handlers;

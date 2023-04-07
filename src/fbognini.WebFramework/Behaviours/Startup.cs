@@ -15,13 +15,6 @@ namespace fbognini.WebFramework.Behaviours
 {
     public static class Startup
     {
-        public static IServiceCollection AddScopedMediatR(this IServiceCollection services, params Type[] handlerAssemblyMarkerTypes)
-        {
-            services.AddMediatR(x => x.AsScoped(), handlerAssemblyMarkerTypes);
-            return services;
-        }
-        public static IServiceCollection AddScopedMediatR<TMarker>(this IServiceCollection services) => services.AddScopedMediatR(typeof(TMarker));
-
         public static IServiceCollection AddRequestLogger(this IServiceCollection services) => services.AddTransient(typeof(IRequestPreProcessor<>), typeof(RequestLogger<>));
         
         public static IServiceCollection AddRequestPerformanceBehaviour(this IServiceCollection services) => services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestPerformanceBehaviour<,>));
