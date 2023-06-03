@@ -15,35 +15,31 @@ using System.Threading.Tasks;
 
 namespace fbognini.WebFramework.Logging
 {
-    internal class RequestLoggingManageRetentionWorker : BackgroundService
+    internal class RequestLoggingSqlManageRetentionWorker : BackgroundService
     {
+        private readonly CronosPeriodicTimer? timer;
         private readonly RequestLoggingSettings settings;
-        private readonly CronosPeriodicTimer timer;
-        private readonly ILogger<RequestLoggingManageRetentionWorker> logger;
-        public RequestLoggingManageRetentionWorker(IOptions<RequestLoggingSettings> options, ILogger<RequestLoggingManageRetentionWorker> logger)
+        private readonly ILogger<RequestLoggingSqlManageRetentionWorker> logger;
+        public RequestLoggingSqlManageRetentionWorker(IOptions<RequestLoggingSettings> options, ILogger<RequestLoggingSqlManageRetentionWorker> logger)
         {
-            if (options.Value.RetentionOptions is null)
-            {
-                throw new ArgumentNullException(nameof(options));
-            }
-
             settings = options.Value;
-
-            timer = new CronosPeriodicTimer(settings.RetentionOptions.CronExpression, CronFormat.Standard);
+            timer = settings.RetentionOptions is not null
+                ? new CronosPeriodicTimer(settings.RetentionOptions.CronExpression, CronFormat.Standard)
+                : null;
 
             this.logger = logger;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            if (settings.RetentionOptions.Days < 1)
+            if (timer == null || settings.SqlOptions == null || settings.RetentionOptions == null)
             {
                 return;
             }
 
             ValidateSettings();
 
-            if (settings.RetentionOptions.RunOnStartup)
+            if (settings.RetentionOptions!.RunOnStartup)
             {
                 await DoWork(stoppingToken);
             }
@@ -58,23 +54,23 @@ namespace fbognini.WebFramework.Logging
         {
             try
             {
-                logger.LogInformation("Manage retentions of {days} for [{schema}].[{table}]", settings.RetentionOptions.Days, settings.SchemaName, settings.TableName);
+                logger.LogInformation("Manage retentions of {days} for [{schema}].[{table}]", settings.RetentionOptions!.Days, settings.SqlOptions!.SchemaName, settings.SqlOptions!.TableName);
 
                 ValidateSettings();
 
                 var total = await DeletePreviousRows(
-                    settings.TableName,
-                    settings.SchemaName,
-                    settings.ColumnName,
+                    settings.SqlOptions!.TableName,
+                    settings.SqlOptions!.SchemaName,
+                    settings.SqlOptions!.ColumnName,
                     DateTime.Now.AddDays(-settings.RetentionOptions.Days),
                     settings.RetentionOptions.BatchSize,
                     cancellationToken);
 
-                logger.LogInformation("Successfully deleted {rows} rows deleted from [{schema}].[{table}]", total, settings.SchemaName, settings.TableName);
+                logger.LogInformation("Successfully deleted {rows} rows deleted from [{schema}].[{table}]", total, settings.SqlOptions!.SchemaName, settings.SqlOptions!.TableName);
             }
             catch (SqlException ex)
             {
-                logger.LogError(ex, "An SqlException occours during DeletePreviousRows from [{schema}].[{table}]", settings.SchemaName, settings.TableName);
+                logger.LogError(ex, "An SqlException occours during DeletePreviousRows from [{schema}].[{table}]", settings.SqlOptions!.SchemaName, settings.SqlOptions!.TableName);
             }
         }
 
@@ -98,7 +94,7 @@ SELECT @Total
 
             long total = 0, deleted;
 
-            using SqlConnection connection = new(settings.ConnectionString);
+            using SqlConnection connection = new(settings.SqlOptions!.ConnectionString);
             connection.Open();
 
             do
@@ -128,7 +124,7 @@ SELECT @Total
 
                 total += deleted;
 
-                logger.LogInformation("{rows} rows deleted from [{schema}].[{table}] in {seconds} seconds", total, settings.SchemaName, settings.TableName, watch.Elapsed.TotalSeconds);
+                logger.LogInformation("{rows} rows deleted from [{schema}].[{table}] in {seconds} seconds", total, settings.SqlOptions!.SchemaName, settings.SqlOptions!.TableName, watch.Elapsed.TotalSeconds);
 
             } while (deleted != 0);
 
@@ -138,12 +134,12 @@ SELECT @Total
 
         private void ValidateSettings()
         {
-            if (settings.RetentionOptions.Days < 1)
+            if (settings.RetentionOptions!.Days < 1)
             {
                 throw new ArgumentOutOfRangeException(nameof(settings.RetentionOptions.Days), settings.RetentionOptions.Days, "Should be greater than zero.");
             }
 
-            if (settings.RetentionOptions.BatchSize < 1)
+            if (settings.RetentionOptions!.BatchSize < 1)
             {
                 throw new ArgumentOutOfRangeException(nameof(settings.RetentionOptions.BatchSize), settings.RetentionOptions.BatchSize, "Should be greater than zero.");
             }

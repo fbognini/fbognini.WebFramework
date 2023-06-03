@@ -64,7 +64,7 @@ namespace fbognini.WebFramework.Middlewares
                 return;
             }
 
-            var propertys = new Dictionary<string, object>()
+            var propertys = new Dictionary<string, object?>()
             {
                 [ApiLoggingProperty] = true,
             };
@@ -80,11 +80,11 @@ namespace fbognini.WebFramework.Middlewares
                 propertys.Add("Action", controllerActionDescriptor.ActionName);
             }
 
+            var requestDate = DateTime.UtcNow;
+
             try
             {
                 AddAdditionalParameters(AdditionalParameters);
-
-                var requestDate = DateTime.UtcNow;
 
                 string request = await ReadRequest(context, ignoreLogging);
 
@@ -99,34 +99,52 @@ namespace fbognini.WebFramework.Middlewares
                 propertys.Add("RequestDate", requestDate);
                 propertys.Add("Request", request);
                 propertys.Add("Origin", context.Request.Headers["origin"].ToString());
-                propertys.Add("Ip", context.Connection.RemoteIpAddress.ToString());
+                propertys.Add("Ip", context.Connection.RemoteIpAddress?.ToString());
                 propertys.Add("UserAgent", context.Request.Headers[HeaderNames.UserAgent].ToString());
 
                 using (logger.BeginScope(propertys))
                 {
                     logger.LogInformation("HTTP {Method} {Path}{Query} requested", context.Request.Method, context.Request.Path.Value, context.Request.QueryString.Value);
                 }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Unexpeted error during logging web request {Path}{Query}", context.Request.Path.Value, context.Request.QueryString.Value);
+                throw;
+            }
 
-                var originalResponseBody = context.Response.Body;
+            var originalResponseBody = context.Response.Body;
 
-                await using var responseBody = recyclableMemoryStreamManager.GetStream();
-                context.Response.Body = responseBody;
+            await using var responseBody = recyclableMemoryStreamManager.GetStream();
+            context.Response.Body = responseBody;
 
+            Exception? exception = null;
+
+            try
+            {
                 await next(context);
+            }
+            catch (Exception ex)
+            {
+                exception = ex;
 
-                context.Response.Body.Seek(0, SeekOrigin.Begin);
-
+                logger.LogWarning(ex, "Unexpected exception catched and rethrowned by logging middleware during pipeline execution");
+                throw;
+            }
+            finally
+            {
                 var responseDate = DateTime.UtcNow;
                 var elapsedMilliseconds = (responseDate - requestDate).Milliseconds;
 
-                string response = await ReadResponse(context, ignoreLogging);
-
                 try
                 {
+                    context.Response.Body.Seek(0, SeekOrigin.Begin);
+                    string response = await ReadResponse(context, ignoreLogging);
+
                     var currentUserService = context.RequestServices.GetRequiredService<ICurrentUserService>();
                     propertys.Add("UserId", currentUserService.UserId);
 
-                    AddAdditionalParameters(AdditionalParameters.Where(x => x.Type == RequestAdditionalParameterType.Session), true);
+                    AddAdditionalParameters(AdditionalParameters, true);
 
                     propertys.Add("ResponseContentType", context.Response.ContentType);
                     propertys.Add("ResponseContentLength", context.Response.ContentLength);
@@ -144,20 +162,15 @@ namespace fbognini.WebFramework.Middlewares
 
                     using (logger.BeginScope(propertys))
                     {
-                        logger.LogInformation("HTTP {Method} {Path}{Query} responded {StatusCode} in {ElapsedMilliseconds} ms", context.Request.Method, context.Request.Path.Value, context.Request.QueryString.Value, context.Response.StatusCode, elapsedMilliseconds);
+                        logger.LogInformation(exception, "HTTP {Method} {Path}{Query} responded {StatusCode} in {ElapsedMilliseconds} ms", context.Request.Method, context.Request.Path.Value, context.Request.QueryString.Value, context.Response.StatusCode, elapsedMilliseconds);
                     }
                 }
                 catch (Exception ex)
                 {
-                    logger.LogWarning(ex, "Unexpeted error during logging web request {Path}{Query}", context.Request.Path.Value, context.Request.QueryString.Value);
+                    logger.LogWarning(ex, "Unexpeted error during logging web response {Path}{Query}", context.Request.Path.Value, context.Request.QueryString.Value);
                 }
 
                 await responseBody.CopyToAsync(originalResponseBody);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Unexpeted error during logging web request {Path}{Query}", context.Request.Path.Value, context.Request.QueryString.Value);
-                throw;
             }
 
             void AddAdditionalParameters(IEnumerable<RequestAdditionalParameter> parameters, bool update = false)
@@ -175,13 +188,13 @@ namespace fbognini.WebFramework.Middlewares
                         propertys.Add(parameter.SqlColumn.PropertyName, value);
                         continue;
                     }
-                    
-                    if (string.IsNullOrWhiteSpace(value) == false)
+
+                    if (value != null || value != default)
                     {
-                        propertys[parameter.SqlColumn.PropertyName] = value;
+                        propertys[parameter.SqlColumn.PropertyName] = value!;    
                     }
 
-                    string GetValue(RequestAdditionalParameter parameter) => parameter.Type switch
+                    object? GetValue(RequestAdditionalParameter parameter) => parameter.Type switch
                     {
                         RequestAdditionalParameterType.Query => context.Request.Query.TryGetValue(parameter.Parameter, out var _value) ? _value : default,
                         RequestAdditionalParameterType.Header => context.Request.Headers.TryGetValue(parameter.Parameter, out var _value) ? _value : default,
@@ -189,6 +202,7 @@ namespace fbognini.WebFramework.Middlewares
                          ? context.Session.Id
                          : context.Session.GetString(parameter.Parameter),
                         RequestAdditionalParameterType.Cookie => context.Request.Cookies.TryGetValue(parameter.Parameter, out var _value) ? _value : default,
+                        RequestAdditionalParameterType.Custom => context.RequestServices.GetRequiredService<IRequestLoggingAdditionalParameterResolver>().Resolve(parameter.Parameter).GetAwaiter().GetResult(),
                         _ => throw new ArgumentException($"{parameter.Type} is not a valid value", nameof(parameter))
                     };
                 }

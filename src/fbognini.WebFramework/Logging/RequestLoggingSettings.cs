@@ -6,6 +6,14 @@ using System.Threading.Tasks;
 
 namespace fbognini.WebFramework.Logging
 {
+    public class SqlOptions
+    {
+        public string ConnectionString { get; set; }
+        public string TableName { get; set; }
+        public string SchemaName { get; set; }
+        public string ColumnName { get; set; } = "TimeStamp";
+    }
+
     public class RetentionOptions
     {
         public int Days { get; set; } = -1;
@@ -16,13 +24,10 @@ namespace fbognini.WebFramework.Logging
 
     public class RequestLoggingSettings
     {
-        public string ConnectionString { get; set; }
-        public string TableName { get; set; } = "Requests";
-        public string SchemaName { get; set; } = "dbo";
-        public string ColumnName { get; set; } = "TimeStamp";
         public bool LogRequest { get; set; } = true;
         public bool LogResponse { get; set; } = true;
-        public RetentionOptions RetentionOptions { get; set; } = new();
-        public IList<RequestAdditionalParameter> AdditionalParameters { get; set; }
+        public SqlOptions? SqlOptions { get; set; }
+        public RetentionOptions? RetentionOptions { get; set; }
+        public List<RequestAdditionalParameter> AdditionalParameters { get; set; } = new();
     }
 }

@@ -14,7 +14,8 @@ namespace fbognini.WebFramework.Logging
         Query,
         Header,
         Session,
-        Cookie
+        Cookie,
+        Custom,
     }
 
     public class RequestAdditionalParameter

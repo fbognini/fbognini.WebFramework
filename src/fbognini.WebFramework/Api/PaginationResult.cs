@@ -17,10 +17,12 @@ namespace fbognini.WebFramework.Api
         internal int? PartialTotal { get; private set; }
 
         #region Implicit Operators
-        public static implicit operator PaginationResult(Pagination data)
+        public static implicit operator PaginationResult(fbognini.Core.Data.Pagination.PaginationResult data)
         {
             if (data == null)
+            {
                 return null;
+            }
 
             return new PaginationResult()
             {

@@ -11,6 +11,7 @@ using Serilog.Filters;
 using Serilog.Sinks.MSSqlServer;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -20,6 +21,20 @@ namespace fbognini.WebFramework.Logging
 {
     public static class Startup
     {
+        public static IServiceCollection AddSerilogSelfLogging(this IServiceCollection services)
+        {
+            string todayFilePath = $@"logs/self/{DateTime.Today:yyyyMMdd}.log";
+            Directory.CreateDirectory(Path.GetDirectoryName(todayFilePath)!);
+
+            var todayFile = File.Exists(todayFilePath)
+                ? new StreamWriter(todayFilePath, true)
+                : File.CreateText(todayFilePath);
+
+            Serilog.Debugging.SelfLog.Enable(TextWriter.Synchronized(todayFile));
+
+            return services;
+        }
+
         public static OptionsBuilder<RequestLoggingSettings> AddRequestLogging(this IServiceCollection services, Action<RequestLoggingSettings> options)
         {
             return services
@@ -48,8 +63,15 @@ namespace fbognini.WebFramework.Logging
 
         private static OptionsBuilder<RequestLoggingSettings> AddRequestLogging(this IServiceCollection services) 
         {
-            services.AddHostedService<RequestLoggingManageRetentionWorker>();
+            services.AddHostedService<RequestLoggingSqlManageRetentionWorker>();
             return services.AddOptions<RequestLoggingSettings>();
+        }
+
+        public static OptionsBuilder<RequestLoggingSettings> WithAdditionalParameterResolver<TRequestLoggingAdditionalParameterResolver>(this OptionsBuilder<RequestLoggingSettings> optionsBuilder)
+            where TRequestLoggingAdditionalParameterResolver : class, IRequestLoggingAdditionalParameterResolver
+        {
+            optionsBuilder.Services.AddTransient<IRequestLoggingAdditionalParameterResolver, TRequestLoggingAdditionalParameterResolver>();
+            return optionsBuilder;
         }
 
         public static OptionsBuilder<RequestLoggingSettings> IgnoreMvcResponses(this OptionsBuilder<RequestLoggingSettings> optionsBuilder)
@@ -84,12 +106,28 @@ namespace fbognini.WebFramework.Logging
 
         public static LoggerConfiguration WriteWebRequestToSqlServer(this LoggerConfiguration logger, IServiceProvider serviceProvider)
         {
-            var settings = serviceProvider.GetService<IOptions<RequestLoggingSettings>>().Value;
+            var settings = serviceProvider.GetRequiredService<IOptions<RequestLoggingSettings>>().Value;
 
-            return logger.WriteWebRequestToSqlServer(settings.ConnectionString, settings.TableName, settings.SchemaName, settings.AdditionalParameters);
+            var sqlOptions = settings.SqlOptions;
+            if (sqlOptions == null)
+            {
+                throw new ArgumentNullException(nameof(settings.SqlOptions));
+            }
+
+            if (string.IsNullOrWhiteSpace(sqlOptions.ConnectionString))
+            {
+                throw new ArgumentNullException(nameof(sqlOptions.ConnectionString));
+            }
+
+            if (string.IsNullOrWhiteSpace(sqlOptions.TableName))
+            {
+                throw new ArgumentNullException(nameof(sqlOptions.TableName));
+            }
+
+            return logger.WriteWebRequestToSqlServer(sqlOptions.ConnectionString, sqlOptions.TableName, sqlOptions.SchemaName, settings.AdditionalParameters);
         }
 
-        public static LoggerConfiguration WriteWebRequestToSqlServer(this LoggerConfiguration logger, string connectionstring, string tableName, string schemaName, IEnumerable<RequestAdditionalParameter> parameters = null)
+        public static LoggerConfiguration WriteWebRequestToSqlServer(this LoggerConfiguration logger, string connectionstring, string tableName, string? schemaName, IEnumerable<RequestAdditionalParameter>? parameters = null)
         {
             var additionalColumns = new List<SqlColumn>()
                 {
@@ -102,7 +140,7 @@ namespace fbognini.WebFramework.Logging
                     new SqlColumn("Action", System.Data.SqlDbType.NVarChar, true, 50),
                     new SqlColumn("Query", System.Data.SqlDbType.NVarChar, false),
                     new SqlColumn("Method", System.Data.SqlDbType.NVarChar, false, 10),
-                    new SqlColumn("RequestContentType", System.Data.SqlDbType.NVarChar, true, 50),
+                    new SqlColumn("RequestContentType", System.Data.SqlDbType.NVarChar, true, 200),
                     new SqlColumn("RequestContentLength", System.Data.SqlDbType.BigInt, true),
                     new SqlColumn("RequestDate", System.Data.SqlDbType.DateTime2, false),
                     new SqlColumn("Request", System.Data.SqlDbType.NVarChar, false, -1),
@@ -143,7 +181,6 @@ namespace fbognini.WebFramework.Logging
             columnOptions.Store.Remove(StandardColumn.Message);
             columnOptions.Store.Remove(StandardColumn.MessageTemplate);
             columnOptions.Store.Remove(StandardColumn.Level);
-            columnOptions.Store.Remove(StandardColumn.Exception);
             columnOptions.Store.Remove(StandardColumn.Properties);
 
             logger
