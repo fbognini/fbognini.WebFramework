@@ -13,4 +13,13 @@ public class SwaggerSettings
     public string LicenseName { get; set; }
     public string LicenseUrl { get; set; }
     public bool UseFluentValidation { get; set; }
+    public SwaggerAuthenticationSettings Authentication { get; set; }
+}
+
+public class SwaggerAuthenticationSettings
+{
+    public bool UseBearerAuthentication { get; set; }
+    public bool UseApiKeyAuthentication { get; set; }
+    public string? ApiKeyHeaderName { get; set; }
+
 }

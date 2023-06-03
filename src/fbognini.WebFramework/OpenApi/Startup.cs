@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using NJsonSchema.Generation.TypeMappers;
 using NSwag;
 using NSwag.AspNetCore;
+using NSwag.Generation.AspNetCore;
 using NSwag.Generation.Processors.Security;
 using System;
 using System.Collections.Generic;
@@ -14,9 +15,9 @@ namespace fbognini.WebFramework.OpenApi;
 
 public static class Startup
 {
-    public static IServiceCollection AddOpenApiDocumentation(this IServiceCollection services, IConfiguration config)
+    public static IServiceCollection AddOpenApiDocumentation(this IServiceCollection services, IConfiguration configuration, Action<AspNetCoreOpenApiDocumentGeneratorSettings, IServiceProvider>? configure = null)
     {
-        var settings = config.GetSection(nameof(SwaggerSettings)).Get<SwaggerSettings>();
+        var settings = configuration.GetSection(nameof(SwaggerSettings)).Get<SwaggerSettings>();
         if (!settings.Enable)
         {
             return services;
@@ -64,21 +65,35 @@ public static class Startup
             //        }
             //    });
             //}
-            //else
-            //{
-            document.AddSecurity(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
+
+            if (settings.Authentication != null)
             {
-                Name = "Authorization",
-                Description = "Input your Bearer token to access this API",
-                In = OpenApiSecurityApiKeyLocation.Header,
-                Type = OpenApiSecuritySchemeType.Http,
-                Scheme = JwtBearerDefaults.AuthenticationScheme,
-                BearerFormat = "JWT",
-            });
-            //}
+                if (settings.Authentication.UseBearerAuthentication)
+                {
+                    document.AddSecurity(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
+                    {
+                        Name = "Authorization",
+                        Description = "Input your Bearer token to access this API",
+                        In = OpenApiSecurityApiKeyLocation.Header,
+                        Type = OpenApiSecuritySchemeType.Http,
+                        Scheme = JwtBearerDefaults.AuthenticationScheme,
+                        BearerFormat = "JWT",
+                    });
+                }
+
+                if (settings.Authentication.UseApiKeyAuthentication && !string.IsNullOrWhiteSpace(settings.Authentication.ApiKeyHeaderName))
+                {
+                    document.AddSecurity(settings.Authentication.ApiKeyHeaderName, new OpenApiSecurityScheme
+                    {
+                        Name = settings.Authentication.ApiKeyHeaderName,
+                        Description = "Input your APIKEY to access this API",
+                        In = OpenApiSecurityApiKeyLocation.Header,
+                        Type = OpenApiSecuritySchemeType.ApiKey
+                    });
+                }
+            }
 
             document.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor());
-            //document.OperationProcessors.Add(new SwaggerGlobalAuthProcessor());
 
             document.TypeMappers.Add(new PrimitiveTypeMapper(typeof(TimeSpan), schema =>
             {
@@ -98,6 +113,11 @@ public static class Startup
                         .GetRequiredService<FluentValidationSchemaProcessor>();
 
                 document.SchemaProcessors.Add(fluentValidationSchemaProcessor);
+            }
+
+            if (configure != null)
+            {
+                configure(document, serviceProvider);
             }
         });
 
