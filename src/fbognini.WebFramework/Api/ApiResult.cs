@@ -1,11 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using fbognini.Core.Data.Pagination;
-using fbognini.Core.Data;
-using System;
 
 namespace fbognini.WebFramework.Api
 {
@@ -13,17 +10,17 @@ namespace fbognini.WebFramework.Api
     {
         public bool IsSuccess { get; set; }
         public HttpStatusCode StatusCode { get; set; }
-        public string Message { get; set; }
+        public string? Message { get; set; }
 
-        public IDictionary<string, string[]> Validations { get; set; }
-        public object AdditionalData { get; set; }
+        public IDictionary<string, string[]>? Validations { get; set; }
+        public object? AdditionalData { get; set; }
 
         public ApiResult(
-            bool isSuccess
-            , HttpStatusCode statusCode
-            , string message = null
-            , IDictionary<string, string[]> validations = null
-            , object additionalData = null)
+            bool isSuccess,
+            HttpStatusCode statusCode,
+            string? message = null,
+            IDictionary<string, string[]> validations = null,
+            object additionalData = null)
         {
             IsSuccess = isSuccess;
             StatusCode = statusCode;
@@ -46,14 +43,13 @@ namespace fbognini.WebFramework.Api
     public class ApiResult<TResponse> : ApiResult
         where TResponse : class
     {
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public TResponse Response { get; set; }
+        public TResponse? Response { get; set; }
 
         public ApiResult(
-            bool isSuccess
-            , HttpStatusCode statusCode
-            , TResponse response
-            , string message = null)
+            bool isSuccess,
+            HttpStatusCode statusCode,
+            TResponse? response,
+            string? message = null)
             : base(isSuccess, statusCode, message)
         {
             Response = response;
@@ -114,17 +110,17 @@ namespace fbognini.WebFramework.Api
        where TResponse : class
     {
 
-        public IList<TResponse> Response { get; set; }
+        public IList<TResponse>? Response { get; set; }
 
-        public PaginationResult Pagination { get; set; }
+        public PaginationResult? Pagination { get; set; }
 
-        public LinksResult Links { get; set; }
+        public LinksResult? Links { get; set; }
 
         public ApiResult(
-           bool isSuccess
-           , HttpStatusCode statusCode
-           , PaginationResponse<TResponse> pagination
-           , string message = null)
+            bool isSuccess,
+            HttpStatusCode statusCode,
+            PaginationResponse<TResponse> pagination,
+            string? message = null)
             : base(isSuccess, statusCode, message)
         {
             Pagination = pagination.Pagination;

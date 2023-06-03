@@ -13,7 +13,7 @@ namespace fbognini.WebFramework
             tempData.Add(key, JsonSerializer.Serialize(value));
         }
 
-        public static T Get<T>(this ITempDataDictionary tempData, string key)
+        public static T? Get<T>(this ITempDataDictionary tempData, string key)
         {
             if (!tempData.ContainsKey(key)) return default;
 

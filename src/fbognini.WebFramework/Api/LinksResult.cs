@@ -1,12 +1,8 @@
-﻿using Newtonsoft.Json;
-
-namespace fbognini.WebFramework.Api
+﻿namespace fbognini.WebFramework.Api
 {
     public class LinksResult
     {
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public string Next { get; set; }
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public string Prev { get; set; }
+        public string? Next { get; set; }
+        public string? Prev { get; set; }
     }
 }
