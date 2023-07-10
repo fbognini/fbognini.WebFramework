@@ -11,6 +11,7 @@ using Serilog.Filters;
 using Serilog.Sinks.MSSqlServer;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -124,12 +125,20 @@ namespace fbognini.WebFramework.Logging
                 throw new ArgumentNullException(nameof(sqlOptions.TableName));
             }
 
-            return logger.WriteWebRequestToSqlServer(sqlOptions.ConnectionString, sqlOptions.TableName, sqlOptions.SchemaName, settings.AdditionalParameters);
+            sqlOptions.AdditionalColumns ??= new();
+
+            var notValidColumn = sqlOptions.AdditionalColumns.Keys.FirstOrDefault(x => settings.AdditionalParameters.All(ap => x != ap.PropertyName));
+            if (notValidColumn is not null)
+            {
+                throw new ArgumentException($"You need to specify {notValidColumn} as additional parameter before using it as additional column");
+            }
+
+            return logger.WriteWebRequestToSqlServer(sqlOptions.ConnectionString, sqlOptions.TableName, sqlOptions.SchemaName, sqlOptions.AdditionalColumns.Values);
         }
 
-        public static LoggerConfiguration WriteWebRequestToSqlServer(this LoggerConfiguration logger, string connectionstring, string tableName, string? schemaName, IEnumerable<RequestAdditionalParameter>? parameters = null)
+        public static LoggerConfiguration WriteWebRequestToSqlServer(this LoggerConfiguration logger, string connectionstring, string tableName, string? schemaName, IEnumerable<SqlColumn>? additionalColumns = null)
         {
-            var additionalColumns = new List<SqlColumn>()
+            var requestColumns = new List<SqlColumn>()
                 {
                     new SqlColumn("RequestId", System.Data.SqlDbType.NVarChar, false, 50),
                     new SqlColumn("Schema", System.Data.SqlDbType.NVarChar, false, 10),
@@ -158,12 +167,13 @@ namespace fbognini.WebFramework.Logging
                     new SqlColumn("Ip", System.Data.SqlDbType.NVarChar, false, 20),
                     new SqlColumn("Origin", System.Data.SqlDbType.NVarChar, false, 400),
                     new SqlColumn("UserAgent", System.Data.SqlDbType.NVarChar, false, 1000),
-                    new SqlColumn("UserId", System.Data.SqlDbType.NVarChar, true, 100)
+                    new SqlColumn("UserId", System.Data.SqlDbType.NVarChar, true, 100),
+                    
                 };
 
-            if (parameters != null)
+            if (additionalColumns != null)
             {
-                additionalColumns.AddRange(parameters.Select(x => x.SqlColumn));
+                requestColumns.AddRange(additionalColumns);
             }
 
             var sinkOptions = new MSSqlServerSinkOptions
@@ -174,7 +184,7 @@ namespace fbognini.WebFramework.Logging
             };
             var columnOptions = new ColumnOptions()
             {
-                AdditionalColumns = additionalColumns,
+                AdditionalColumns = requestColumns,
                 DisableTriggers = true
             };
 

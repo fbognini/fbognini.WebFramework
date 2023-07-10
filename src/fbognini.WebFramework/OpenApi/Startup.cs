@@ -79,10 +79,10 @@ public static class Startup
 
                 if (settings.Authentication.UseApiKeyAuthentication && !string.IsNullOrWhiteSpace(settings.Authentication.ApiKeyHeaderName))
                 {
-                    options.AddSecurity("ApiKey", new OpenApiSecurityScheme
+                    options.AddSecurity($"ApiKey [{settings.Authentication.ApiKeyHeaderName}]", new OpenApiSecurityScheme
                     {
                         Name = settings.Authentication.ApiKeyHeaderName,
-                        Description = "Input your APIKEY to access this API",
+                        Description = "Input your ApiKey to access this API",
                         In = ParameterLocation.Header,
                         Type = SecuritySchemeType.ApiKey,
                         Scheme = "ApiKeyScheme"

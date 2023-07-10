@@ -104,7 +104,7 @@ namespace fbognini.WebFramework.Middlewares
 
                 using (logger.BeginScope(propertys))
                 {
-                    logger.LogInformation("HTTP {Method} {Path}{Query} requested", context.Request.Method, context.Request.Path.Value, context.Request.QueryString.Value);
+                    logger.LogDebug("HTTP {Method} {Path}{Query} requested", context.Request.Method, context.Request.Path.Value, context.Request.QueryString.Value);
                 }
             }
             catch (Exception ex)
@@ -178,20 +178,16 @@ namespace fbognini.WebFramework.Middlewares
                 foreach (var parameter in parameters)
                 {
                     var value = GetValue(parameter);
-                    if (value == null && parameter.SqlColumn.AllowNull == false)
-                    {
-                        logger.LogWarning("Expected {parameter} in {type} but no value provided", parameter.Parameter, parameter.Type.ToString());
-                    }
 
-                    if (update == false || propertys.ContainsKey(parameter.SqlColumn.PropertyName) == false)
+                    if (update == false || propertys.ContainsKey(parameter.PropertyName) == false)
                     {
-                        propertys.Add(parameter.SqlColumn.PropertyName, value);
+                        propertys.Add(parameter.PropertyName, value);
                         continue;
                     }
 
                     if (value != null || value != default)
                     {
-                        propertys[parameter.SqlColumn.PropertyName] = value!;    
+                        propertys[parameter.PropertyName] = value!;    
                     }
 
                     object? GetValue(RequestAdditionalParameter parameter) => parameter.Type switch
@@ -209,16 +205,16 @@ namespace fbognini.WebFramework.Middlewares
             }
         }
 
-        private async Task<string> ReadRequest(HttpContext context, IgnoreRequestLoggingAttribute ignoreLogging)
+        private async Task<string> ReadRequest(HttpContext context, IgnoreRequestLoggingAttribute? ignoreLogging)
         {
             if (ignoreLogging != null && ignoreLogging.IgnoreRequestLogging)
             {
-                return "[[attribute - no log]]";
+                return "[[ATTR - NOLOG]]";
             }
 
             if (ignoreLogging == null && LogRequest == false)
             {
-                return "[[configuration - no log]]";
+                return "[[CONF - NOLOG]]";
             }
 
             context.Request.EnableBuffering();
@@ -252,16 +248,16 @@ namespace fbognini.WebFramework.Middlewares
             return Serialize(context.Request.Form.ToDictionary(k => k.Key, k => k.Value.First()));
         }
 
-        private async Task<string> ReadResponse(HttpContext context, IgnoreRequestLoggingAttribute ignoreLogging)
+        private async Task<string> ReadResponse(HttpContext context, IgnoreRequestLoggingAttribute? ignoreLogging)
         {
             if (ignoreLogging != null && ignoreLogging.IgnoreResponseLogging)
             {
-                return "[[attribute - no log]]";
+                return "[[ATTR - NOLOG]]";
             }
 
             if (ignoreLogging == null && LogResponse == false)
             {
-                return "[[configuration - no log]]";
+                return "[[CONF - NOLOG]]";
             }
 
             var response = await new StreamReader(context.Response.Body).ReadToEndAsync();

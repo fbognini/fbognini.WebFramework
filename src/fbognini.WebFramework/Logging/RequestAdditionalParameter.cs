@@ -20,20 +20,25 @@ namespace fbognini.WebFramework.Logging
 
     public class RequestAdditionalParameter
     {
+        private string? propertyName;
+
         public RequestAdditionalParameter()
         {
 
         }
 
-        public RequestAdditionalParameter(string parameter, SqlColumn sqlColumn, RequestAdditionalParameterType type = RequestAdditionalParameterType.Query)
+        public RequestAdditionalParameter(string parameter, RequestAdditionalParameterType type = RequestAdditionalParameterType.Query)
         {
             Parameter = parameter;
-            SqlColumn = sqlColumn;
             Type = type;
         }
 
         public string Parameter { get; set; }
-        public SqlColumn SqlColumn { get; set; }
+        public string PropertyName
+        {
+            get => propertyName ?? Parameter;
+            set => propertyName = value;
+        }
         public RequestAdditionalParameterType Type { get; set; }
     }
 }
