@@ -3,6 +3,8 @@ using fbognini.WebFramework.Filters;
 using fbognini.WebFramework.Logging;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -12,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -69,16 +72,11 @@ namespace fbognini.WebFramework.Middlewares
                 [ApiLoggingProperty] = true,
             };
 
-            var controllerActionDescriptor = endpoint
-                .Metadata
-                .GetMetadata<ControllerActionDescriptor>();
+            var (area, controller, action) = GetRouteValues(endpoint);
 
-            if (controllerActionDescriptor != null)
-            {
-                propertys.Add("Area", controllerActionDescriptor.RouteValues.TryGetValue("area", out string _area) ? _area : null);
-                propertys.Add("Controller", controllerActionDescriptor.ControllerName);
-                propertys.Add("Action", controllerActionDescriptor.ActionName);
-            }
+            propertys.Add("Area", area);
+            propertys.Add("Controller", controller);
+            propertys.Add("Action", action);
 
             var requestDate = DateTime.UtcNow;
 
@@ -266,10 +264,10 @@ namespace fbognini.WebFramework.Middlewares
             return response;
         }
 
-        private static (string Model, string ViewData, string TempData, string RedirectTo) GetModel(HttpContext context)
+        private static (string? Model, string? ViewData, string? TempData, string? RedirectTo) GetModel(HttpContext context)
         {
             var key = typeof(Microsoft.AspNetCore.Mvc.IUrlHelper);
-            if (context.Items.TryGetValue(key, out var helper) == false)
+            if (context.Items.TryGetValue(key, out var helper) == false || helper == null)
             {
                 return (null, null, null, null);
             }
@@ -280,19 +278,46 @@ namespace fbognini.WebFramework.Middlewares
                 return (null, null, null, null);
             }
 
-            var viewcontext = property.GetValue(helper) as Microsoft.AspNetCore.Mvc.Rendering.ViewContext;
-            if (viewcontext == null)
+            var renderContext = property.GetValue(helper);
+            if (renderContext is ViewContext viewcontext)
             {
-                return (null, null, null, context.Response.Headers[HeaderNames.Location].ToString());
+                var model = SerializeModel(viewcontext.ViewData.Model);
+                var viewdata = Serialize(viewcontext.ViewData);
+                var tempdata = Serialize(viewcontext.TempData);
+
+                return (model, viewdata, tempdata, null);
             }
 
-            var model = viewcontext.ViewData.Model != null ? Serialize(viewcontext.ViewData.Model) : null;
-            var viewdata = Serialize(viewcontext.ViewData);
-            var tempdata = Serialize(viewcontext.TempData);
+            if (renderContext is PageContext pageContext)
+            {
+                var model = SerializeModel(pageContext.ViewData.Model);
+                var viewdata = Serialize(pageContext.ViewData);
 
-            return (model, viewdata, tempdata, null);
+                return (model, viewdata, null, null);
+            }
+
+            return (null, null, null, context.Response.Headers[HeaderNames.Location].ToString());
         }
 
+
+        private static (string? Area, string? Controller, string? Action) GetRouteValues(Endpoint endpoint)
+        {
+            var controllerActionDescriptor = endpoint.Metadata.GetMetadata<ControllerActionDescriptor>();
+            if (controllerActionDescriptor != null)
+            {
+                var area = controllerActionDescriptor.RouteValues.TryGetValue("area", out string? _area) ? _area : null;
+                return (area, controllerActionDescriptor.ControllerName, controllerActionDescriptor.ActionName);
+            }
+
+            var pageActionDescriptor = endpoint.Metadata.GetMetadata<PageActionDescriptor>();
+            if (pageActionDescriptor != null)
+            {
+                var page = pageActionDescriptor.RouteValues.TryGetValue("page", out string? _page) ? _page : null;
+                return (pageActionDescriptor.AreaName, null, page);
+            }
+
+            return (null, null, null);
+        }
         private static string GetInvalidModelState(HttpContext context)
         {
             var feature = context.Features.Get<ModelStateFeature>();
@@ -332,7 +357,28 @@ namespace fbognini.WebFramework.Middlewares
 
             return textWriter.ToString();
         }
-    
+
+        private static string? SerializeModel(object? model)
+        {
+            if (model is null)
+            {
+                return null;
+            }
+
+            if (model is not PageModel)
+            {
+                return Serialize(model);
+            }
+
+            // get properties of only derivied class
+            var dictionary = model.GetType().GetProperties(
+                BindingFlags.DeclaredOnly |
+                BindingFlags.Public |
+                BindingFlags.Instance).ToDictionary(x => x.Name, x => x.GetValue(model));
+
+            return Serialize(dictionary);
+        }
+
         private static string Serialize(object model)
         {
             return JsonSerializer.Serialize(model, new JsonSerializerOptions()
