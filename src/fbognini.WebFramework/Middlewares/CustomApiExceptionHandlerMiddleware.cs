@@ -96,14 +96,7 @@ namespace fbognini.WebFramework.Middlewares
                 }
                 else
                 {
-                    if (exception is ISilentException)
-                    {
-                        logger.LogInformation(exception, "A silent error occours. See previous logs");
-                    }
-                    else
-                    {
-                        logger.LogError(exception, "Unexpected API exception during request {Request}", context.Request.GetEncodedUrl());
-                    }
+                    DefaultExceptionLogging.Log(logger, context, exception);
                 }
 
                 await WriteToResponseAsync();

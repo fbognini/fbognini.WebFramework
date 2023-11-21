@@ -91,14 +91,7 @@ namespace fbognini.WebFramework.Middlewares
             {
                 if (!env.IsDevelopment())
                 {
-                    if (exception is ISilentException)
-                    {
-                        logger.LogInformation(exception, "A silent error occours. See previous logs");
-                    }
-                    else
-                    {
-                        logger.LogError(exception, "Unexpected exception during request {Request}", context.Request.GetEncodedUrl());
-                    }
+                    DefaultExceptionLogging.Log(logger, context, exception);
                 }
 
                 var view = new ViewResult()
@@ -113,8 +106,6 @@ namespace fbognini.WebFramework.Middlewares
 
                 await context.ExecuteResultAsync(view);
             }
-
-            
         }
     }
 }
