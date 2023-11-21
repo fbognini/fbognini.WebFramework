@@ -19,8 +19,8 @@ namespace fbognini.WebFramework.Api
             bool isSuccess,
             HttpStatusCode statusCode,
             string? message = null,
-            IDictionary<string, string[]> validations = null,
-            object additionalData = null)
+            IDictionary<string, string[]>? validations = null,
+            object? additionalData = null)
         {
             IsSuccess = isSuccess;
             StatusCode = statusCode;

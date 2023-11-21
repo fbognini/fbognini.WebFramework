@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Http.Extensions;
 
 namespace fbognini.WebFramework.Middlewares
 {
@@ -88,16 +89,23 @@ namespace fbognini.WebFramework.Middlewares
             }
             catch (Exception exception)
             {
+                if (!env.IsDevelopment())
+                {
+                    if (exception is ISilentException)
+                    {
+                        logger.LogInformation(exception, "A silent error occours. See previous logs");
+                    }
+                    else
+                    {
+                        logger.LogError(exception, "Unexpected exception during request {Request}", context.Request.GetEncodedUrl());
+                    }
+                }
+
                 var view = new ViewResult()
                 {
                     ViewName = "ErrorException",
                     ViewData = new ViewDataDictionary(new EmptyModelMetadataProvider(), new ModelStateDictionary())
                 };
-
-                if (!env.IsDevelopment())
-                {
-                    logger.LogError(exception, "exception during request {Request}", context.Request.Path.ToString());
-                }
 
                 view.ViewData.Add("ExceptionPath", context.Request.Path);
                 view.ViewData.Add("ExceptionMessage", exception.Message);

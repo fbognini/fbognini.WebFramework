@@ -19,8 +19,9 @@ namespace fbognini.WebFramework.Behaviours
         
         public static IServiceCollection AddRequestPerformanceBehaviour(this IServiceCollection services) => services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestPerformanceBehaviour<,>));
         public static IServiceCollection AddRequestValidationBehavior(this IServiceCollection services) => services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestValidationBehavior<,>));
-        public static IServiceCollection AddIHttpRequestValidationBehavior(this IServiceCollection services) 
+        public static IServiceCollection AddIHttpRequestValidationBehavior(this IServiceCollection services)
         {
+            ValidatorOptions.Global.DefaultRuleLevelCascadeMode = CascadeMode.Stop;
             ValidatorOptions.Global.DefaultClassLevelCascadeMode = CascadeMode.Stop;
             ValidatorOptions.Global.DisplayNameResolver = (type, member, expression) =>
             {

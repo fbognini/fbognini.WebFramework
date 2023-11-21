@@ -15,6 +15,8 @@ using fbognini.Core.Interfaces;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using fbognini.WebFramework.Validation;
+using Microsoft.AspNetCore.Http.Extensions;
+using System.Text.Json.Serialization;
 
 namespace fbognini.WebFramework.Middlewares
 {
@@ -28,7 +30,7 @@ namespace fbognini.WebFramework.Middlewares
 
     public class CustomApiExceptionHandlerMiddleware
     {
-        public static List<Type> HandledException = new()
+        public static readonly List<Type> HandledException = new()
         {
             typeof(AppException),
             typeof(ValidationException),
@@ -39,8 +41,6 @@ namespace fbognini.WebFramework.Middlewares
         private readonly RequestDelegate next;
         private readonly IWebHostEnvironment env;
         private readonly ILogger<CustomApiExceptionHandlerMiddleware> logger;
-
-        private ICurrentUserService currentUserService;
 
         public CustomApiExceptionHandlerMiddleware(
             RequestDelegate next,
@@ -54,11 +54,9 @@ namespace fbognini.WebFramework.Middlewares
 
         public async Task Invoke(HttpContext context)
         {
-            currentUserService = context.RequestServices.GetRequiredService<ICurrentUserService>();
-
-            Dictionary<string, string[]> validations = null;
-            string message = null;
-            object additionalData = null;
+            Dictionary<string, string[]>? validations = null;
+            string? message = null;
+            object? additionalData = null;
             HttpStatusCode httpStatusCode = HttpStatusCode.InternalServerError;
 
             try
@@ -96,8 +94,17 @@ namespace fbognini.WebFramework.Middlewares
                 {
                     SetExceptionMessage(exception);
                 }
-                    
-                logger.LogError(exception, "Generic exception {message} for user {user} during request {path}", exception.Message, currentUserService.UserId, context.Request.Path);
+                else
+                {
+                    if (exception is ISilentException)
+                    {
+                        logger.LogInformation(exception, "A silent error occours. See previous logs");
+                    }
+                    else
+                    {
+                        logger.LogError(exception, "Unexpected API exception during request {Request}", context.Request.GetEncodedUrl());
+                    }
+                }
 
                 await WriteToResponseAsync();
             }
@@ -105,10 +112,12 @@ namespace fbognini.WebFramework.Middlewares
             async Task WriteToResponseAsync()
             {
                 if (context.Response.HasStarted)
+                {
                     throw new InvalidOperationException("The response has already started, the http status code middleware will not be executed.");
+                }
 
                 var result = new ApiResult(false, httpStatusCode, message, validations, additionalData);
-                var json = JsonSerializer.Serialize(result, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+                var json = JsonSerializer.Serialize(result, new JsonSerializerOptions(JsonSerializerDefaults.Web) { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
 
                 context.Response.StatusCode = (int)httpStatusCode;
                 context.Response.ContentType = "application/json";
@@ -132,7 +141,7 @@ namespace fbognini.WebFramework.Middlewares
 
             void SetExceptionMessage(Exception exception)
             {
-                var dic = new Dictionary<string, string>
+                var dic = new Dictionary<string, string?>
                 {
                     ["Exception"] = exception.Message,
                     ["StackTrace"] = exception.StackTrace
@@ -145,7 +154,9 @@ namespace fbognini.WebFramework.Middlewares
                 }
 
                 if (exception is SecurityTokenExpiredException tokenException)
+                {
                     dic.Add("Expires", tokenException.Expires.ToString());
+                }
 
                 message = JsonSerializer.Serialize(dic);
             }
