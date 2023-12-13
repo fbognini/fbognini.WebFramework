@@ -15,7 +15,7 @@ namespace fbognini.WebFramework.Utilities
     public sealed class CronosPeriodicTimer : IDisposable
     {
         private readonly CronExpression _cronExpression; // Also used as the locker
-        private PeriodicTimer _activeTimer;
+        private PeriodicTimer? _activeTimer;
         private bool _disposed;
         private static readonly TimeSpan _minDelay = TimeSpan.FromMilliseconds(500);
 

@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace fbognini.WebFramework.SidebarMenu
+namespace fbognini.WebFramework.DynamicMenu
 {
-    public class PolicyClass
+    public class ActionAuthorizationPolicy
     {
-        public PolicyClass(IEnumerable<string> policys, bool isAnd)
+        public ActionAuthorizationPolicy(IEnumerable<string> policys, bool isAnd)
         {
             Policys = policys;
             IsAnd = isAnd;
@@ -16,8 +16,10 @@ namespace fbognini.WebFramework.SidebarMenu
 
         public bool IsPolicysValid(IEnumerable<string> policys)
         {
-            if (Policys?.Any() == false)
+            if (Policys is null || !Policys.Any())
+            {
                 return true;
+            }
 
             if (IsAnd)
             {

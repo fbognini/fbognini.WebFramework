@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace fbognini.WebFramework.Filters
+namespace fbognini.WebFramework.Authorization
 {
     public class MultiplePolicysAuthorizeAttribute : TypeFilterAttribute
     {

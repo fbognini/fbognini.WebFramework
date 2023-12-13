@@ -107,7 +107,7 @@ namespace fbognini.WebFramework.Plugins.DataTables
     }
 
     /// <summary>
-    /// The parameters sent by jQuery DataTables in AJAX queries.
+    /// The parameters sent by DataTables in AJAX queries.
     /// </summary>
     public class DtParameters
     {
@@ -123,13 +123,13 @@ namespace fbognini.WebFramework.Plugins.DataTables
         /// An array defining all columns in the table.
         /// </summary>
         [JsonPropertyName("columns")]
-        public DtColumn[] Columns { get; set; }
+        public DtColumn[]? Columns { get; set; }
 
         /// <summary>
         /// An array defining how many columns are being ordering upon - i.e. if the array length is 1, then a single column sort is being performed, otherwise a multi-column sort is being performed.
         /// </summary>
         [JsonPropertyName("order")]
-        public DtOrder[] Order { get; set; }
+        public DtOrder[]? Order { get; set; }
 
         /// <summary>
         /// Paging first record indicator.
@@ -150,12 +150,12 @@ namespace fbognini.WebFramework.Plugins.DataTables
         /// Global search value. To be applied to all columns which have searchable as true.
         /// </summary>
         [JsonPropertyName("search")]
-        public DtSearch Search { get; set; }
+        public DtSearch? Search { get; set; }
 
         /// <summary>
         /// Custom column that is used to further sort on the first Order column.
         /// </summary>
-        public string SortOrder => Columns != null && Order != null && Order.Length > 0
+        public string? SortOrder => Columns != null && Order != null && Order.Length > 0
             ? (Columns[Order[0].Column].Data + (Order[0].Dir == DtOrderDir.DESC ? " " + Order[0].Dir : string.Empty))
             : null;
 
@@ -163,7 +163,7 @@ namespace fbognini.WebFramework.Plugins.DataTables
         /// For Posting Additional Parameters to Server
         /// </summary>
         [JsonPropertyName("additionalValues")]
-        public IEnumerable<string> AdditionalValues { get; set; }
+        public IEnumerable<string>? AdditionalValues { get; set; }
 
     }
 
