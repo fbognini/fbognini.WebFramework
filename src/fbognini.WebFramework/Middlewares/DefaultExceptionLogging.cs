@@ -1,6 +1,7 @@
 ﻿using fbognini.Core.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
 using System;
 
@@ -16,7 +17,7 @@ namespace fbognini.WebFramework.Middlewares
             }
             else
             {
-                logger.LogError(exception, "Unexpected exception during request {Request}", context.Request.GetEncodedUrl());
+                logger.LogError(exception, "Unexpected exception {ExceptionMessage} during request {Request}", exception.Message, context.Request.GetEncodedUrl());
             }
         }
     }

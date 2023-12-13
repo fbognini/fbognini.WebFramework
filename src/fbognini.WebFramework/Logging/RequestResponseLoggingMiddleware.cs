@@ -1,6 +1,5 @@
 ﻿using fbognini.Core.Interfaces;
 using fbognini.WebFramework.Filters;
-using fbognini.WebFramework.Logging;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -20,7 +19,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Web;
 
-namespace fbognini.WebFramework.Middlewares
+namespace fbognini.WebFramework.Logging
 {
     internal class RequestResponseLoggingMiddleware
     {
@@ -35,8 +34,8 @@ namespace fbognini.WebFramework.Middlewares
 
         public RequestResponseLoggingMiddleware(RequestDelegate next)
         {
-            this.recyclableMemoryStreamManager = new RecyclableMemoryStreamManager();
-            this.next = next; 
+            recyclableMemoryStreamManager = new RecyclableMemoryStreamManager();
+            this.next = next;
         }
 
         public async Task Invoke(HttpContext context)
@@ -185,7 +184,7 @@ namespace fbognini.WebFramework.Middlewares
 
                     if (value != null || value != default)
                     {
-                        propertys[parameter.PropertyName] = value!;    
+                        propertys[parameter.PropertyName] = value!;
                     }
 
                     object? GetValue(RequestAdditionalParameter parameter) => parameter.Type switch
@@ -330,7 +329,7 @@ namespace fbognini.WebFramework.Middlewares
                 .Where(v => v.Value.Errors.Count > 0)
                 .Select(x => new
                 {
-                    Key = x.Key,
+                    x.Key,
                     Errors = x.Value.Errors.ToList()
                 });
 

@@ -20,11 +20,15 @@ namespace fbognini.WebFramework.IpRestrictions
 
         private static bool IsValidIp(string ip, List<string> ips)
         {
-            if (ips == null)
+            if (string.IsNullOrEmpty(ip))
+            {
                 return false;
+            }
 
             if (ips.Contains("*"))
+            {
                 return true;
+            }
 
             return ips.Contains(ip);
         }

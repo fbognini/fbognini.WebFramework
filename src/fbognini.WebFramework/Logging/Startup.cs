@@ -1,5 +1,4 @@
 ﻿using fbognini.WebFramework.IpRestrictions;
-using fbognini.WebFramework.Middlewares;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;

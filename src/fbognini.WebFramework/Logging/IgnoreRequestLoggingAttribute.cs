@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace fbognini.WebFramework.Filters
+namespace fbognini.WebFramework.Logging
 {
     public enum RequestLoggingAttributeMode
     {
@@ -37,7 +37,7 @@ namespace fbognini.WebFramework.Filters
         /// <param name="ignoreresponse"></param>
         public IgnoreRequestLoggingAttribute(bool ignorerequest, bool ignoreresponse)
         {
-            this.mode = RequestLoggingAttributeMode.Force;
+            mode = RequestLoggingAttributeMode.Force;
             IgnoreRequestLogging = ignorerequest;
             IgnoreResponseLogging = ignoreresponse;
         }
