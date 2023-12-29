@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 
-#if NET7_0
+#if NET7_0_OR_GREATER
 namespace fbognini.WebFramework.Handlers
 {
     public static class MinimalatrExtensions

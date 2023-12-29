@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using fbognini.WebFramework.Behaviours;
+using MediatR;
 using MediatR.Pipeline;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -11,7 +12,6 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-#if NET7_0
 namespace fbognini.WebFramework.Handlers
 {
     public static class Startup
@@ -19,8 +19,8 @@ namespace fbognini.WebFramework.Handlers
         public static IServiceCollection AddMediatRExceptionHandler(this IServiceCollection services)
         {
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestExceptionProcessorBehavior<,>));
+            services.AddTransient(typeof(IRequestExceptionHandler<,,>), typeof(GenericExceptionHandler<,,>));
             return services;
         }
     }
 }
-#endif

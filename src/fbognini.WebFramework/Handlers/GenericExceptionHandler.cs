@@ -18,10 +18,9 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-#if NET7_0
 namespace fbognini.WebFramework.Handlers
 {
-    public class GenericExceptionHandler<TRequest, TResponse, TException> : RequestExceptionHandler<TRequest, IResult>
+    public class GenericExceptionHandler<TRequest, TResponse, TException> : IRequestExceptionHandler<TRequest, IResult, TException>
         where TRequest : IHttpRequest
         where TResponse : IResult
         where TException : Exception
@@ -33,11 +32,13 @@ namespace fbognini.WebFramework.Handlers
             this.logger = logger;
         }
 
-        protected override void Handle(TRequest request, Exception exception, RequestExceptionHandlerState<IResult> state)
+        public Task Handle(TRequest request, TException exception, RequestExceptionHandlerState<IResult> state, CancellationToken cancellationToken)
         {
-            var result = HandleException(request, exception);
-
+            var result = HandleException(request, exception); 
+            
             state.SetHandled(result);
+
+            return Task.CompletedTask;
         }
 
         protected virtual IResult HandleException(TRequest request, Exception exception)
@@ -62,6 +63,11 @@ namespace fbognini.WebFramework.Handlers
         {
             logger.LogError(exception, "That's strange. An AppException occourred during {RequestName}. Flow shouldn't be managed by exceptions", typeof(TRequest).Name);
 
+            if (exception is NotFoundException notFoundException)
+            {
+                return Results.NotFound(new NotFoundProblemDetails(notFoundException));
+            }
+
             var response = new AppProblemDetails(exception);
             var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
 
@@ -73,7 +79,12 @@ namespace fbognini.WebFramework.Handlers
                 });
             }
 
+#if NET6_0
+            return Results.Json(response, options, statusCode: response.Status!.Value);
+#else
             return Results.Json<ProblemDetails>(response, options, statusCode: response.Status!.Value);
+#endif
+
         }
 
         private IResult HandleSystemException(Exception exception)
@@ -83,12 +94,16 @@ namespace fbognini.WebFramework.Handlers
             var response = new ProblemDetails()
             {
                 Status = 500,
-                Title = "InternalServerError",
-                Detail = exception.Message
+                Title = "InternalServerError"
             };
             var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+
+#if NET6_0
+            return Results.Json(response, options, statusCode: 500);
+#else
             return Results.Json<ProblemDetails>(response, options, statusCode: 500);
+#endif
+
         }
     }
 }
-#endif
