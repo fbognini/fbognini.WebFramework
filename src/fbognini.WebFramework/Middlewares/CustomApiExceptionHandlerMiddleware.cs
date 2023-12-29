@@ -90,13 +90,11 @@ namespace fbognini.WebFramework.Middlewares
             }
             catch (Exception exception)
             {
+                DefaultExceptionLogging.Log(logger, context, exception);
+
                 if (env.IsDevelopment())
                 {
                     SetExceptionMessage(exception);
-                }
-                else
-                {
-                    DefaultExceptionLogging.Log(logger, context, exception);
                 }
 
                 await WriteToResponseAsync();

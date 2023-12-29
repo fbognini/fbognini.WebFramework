@@ -77,34 +77,35 @@ namespace fbognini.WebFramework.Middlewares
             {
                 await next(context);
             }
+            catch (TaskCanceledException ex) when (ex.InnerException is not TimeoutException timeoutException)
+            {
+                logger.LogInformation("Task has been cancelled during request {Request}", context.Request.GetEncodedUrl());
+            }
             catch (NotFoundException exception)
             {
-                var view = new ViewResult()
+                var notFoundView = new ViewResult()
                 {
                     ViewName = "ErrorNotFound",
                 };
 
                 context.Response.StatusCode = (int)exception.HttpStatusCode;
-                await context.ExecuteResultAsync(view);
+                await context.ExecuteResultAsync(notFoundView);
             }
             catch (Exception exception)
             {
-                if (!env.IsDevelopment())
-                {
-                    DefaultExceptionLogging.Log(logger, context, exception);
-                }
+                DefaultExceptionLogging.Log(logger, context, exception);
 
-                var view = new ViewResult()
+                var exceptionView = new ViewResult()
                 {
                     ViewName = "ErrorException",
                     ViewData = new ViewDataDictionary(new EmptyModelMetadataProvider(), new ModelStateDictionary())
                 };
 
-                view.ViewData.Add("ExceptionPath", context.Request.Path);
-                view.ViewData.Add("ExceptionMessage", exception.Message);
-                view.ViewData.Add("StackTrace", exception.StackTrace);
+                exceptionView.ViewData.Add("ExceptionPath", context.Request.Path);
+                exceptionView.ViewData.Add("ExceptionMessage", exception.Message);
+                exceptionView.ViewData.Add("StackTrace", exception.StackTrace);
 
-                await context.ExecuteResultAsync(view);
+                await context.ExecuteResultAsync(exceptionView);
             }
         }
     }
