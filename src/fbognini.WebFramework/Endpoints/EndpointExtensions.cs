@@ -10,7 +10,7 @@ using fbognini.WebFramework.Handlers.Problems;
 
 namespace fbognini.WebFramework.Endpoints;
 
-#if NET7_0
+#if NET7_0_OR_GREATER
 public static class EndpointExtensions
 {
     public static void AddEndpoints<TMarker>(this IServiceCollection services,

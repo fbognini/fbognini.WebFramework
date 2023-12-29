@@ -1,56 +1,65 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <PackageId>fbognini.WebFramework</PackageId>
-    <TargetFrameworks>net7.0;net6.0</TargetFrameworks>
-    <Version>8.5.0</Version>
-    <Authors>Francesco Bognini</Authors>
-    <Company>Francesco Bognini</Company>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageProjectUrl>https://github.com/fbognini/fbognini.WebFramework</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/fbognini/fbognini.WebFramework</RepositoryUrl>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<PackageId>fbognini.WebFramework</PackageId>
+		<TargetFrameworks>net8.0;net7.0;net6.0</TargetFrameworks>
+		<Version>8.6.0</Version>
+		<Authors>Francesco Bognini</Authors>
+		<Company>Francesco Bognini</Company>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<PackageProjectUrl>https://github.com/fbognini/fbognini.WebFramework</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/fbognini/fbognini.WebFramework</RepositoryUrl>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
 
-  <ItemGroup>
-    
-    <PackageReference Include="Cronos" Version="0.7.1" />
-    
-    <PackageReference Include="fbognini.Core" Version="9.0.4" />
-    
-    <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
-    
-    <PackageReference Include="MediatR" Version="12.0.1" />
-    
-    <PackageReference Include="Microsoft.FeatureManagement.AspNetCore" Version="3.1.0" />
+	<ItemGroup>
 
-    <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="2.3.2" />
-    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.5.0" />
-    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.5.0" />
-    <PackageReference Include="System.Text.Json" Version="7.0.2" />
-    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+		<PackageReference Include="Cronos" Version="0.8.0" />
 
-    <PackageReference Include="Serilog" Version="2.12.0" />
-    <PackageReference Include="Serilog.Sinks.MSSqlServer" Version="6.3.0" />
-  </ItemGroup>
+		<PackageReference Include="fbognini.Core" Version="9.1.0" />
+
+		<PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
+
+		<PackageReference Include="Microsoft.FeatureManagement.AspNetCore" Version="3.1.1" />
+
+		<PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="3.0.0" />
+		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.5.0" />
+		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.5.0" />
+		<PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+
+		<PackageReference Include="Serilog" Version="3.1.1" />
+		<PackageReference Include="Serilog.Sinks.MSSqlServer" Version="6.5.0" />
+	</ItemGroup>
 
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net7.0' ">
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.4" />
-    <PackageReference Include="Microsoft.Extensions.Localization.Abstractions" Version="7.0.4" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
-  </ItemGroup>
+	<ItemGroup Condition=" '$(TargetFramework)' == 'net8.0' ">
+		<PackageReference Include="MediatR" Version="12.2.1" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Localization.Abstractions" Version="8.0.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+		<PackageReference Include="System.Text.Json" Version="8.0.0" />
+	</ItemGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.15" />
-    <PackageReference Include="Microsoft.Extensions.Localization.Abstractions" Version="6.0.15" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.1" />
-  </ItemGroup>
+	<ItemGroup Condition=" '$(TargetFramework)' == 'net7.0' ">
+		<PackageReference Include="MediatR" Version="12.1.1" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.14" />
+		<PackageReference Include="Microsoft.Extensions.Localization.Abstractions" Version="7.0.14" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
+		<PackageReference Include="System.Text.Json" Version="7.0.4" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <None Include="..\..\LICENSE" Pack="true" PackagePath="" />
-    <None Include="..\..\README.md" Pack="true" PackagePath="" />
-  </ItemGroup>
+	<ItemGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
+		<PackageReference Include="MediatR" Version="12.1.1" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.25" />
+		<PackageReference Include="Microsoft.Extensions.Localization.Abstractions" Version="6.0.25" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.1" />
+		<PackageReference Include="System.Text.Json" Version="6.0.9" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="..\..\LICENSE" Pack="true" PackagePath="" />
+		<None Include="..\..\README.md" Pack="true" PackagePath="" />
+	</ItemGroup>
 
 </Project>

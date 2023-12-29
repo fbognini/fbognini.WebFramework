@@ -40,7 +40,7 @@ namespace fbognini.WebFramework.DynamicMenu
 
         private static DynamicMenu GetDynamicMenu(IConfiguration configuration, string baseNamespace, string sectionName)
         {
-            var groups = configuration.GetSection(sectionName).Get<List<DynamicMenuGroup>>();
+            var groups = configuration.GetSection(sectionName).Get<List<DynamicMenuGroup>>() ?? new();
             foreach (var group in groups)
             {
                 foreach (var groupChild in group.Children)
@@ -59,13 +59,11 @@ namespace fbognini.WebFramework.DynamicMenu
                             continue;
                         }
 
-
                         var method = controller.GetMethod(action.Action);
                         if (method == null)
                         {
                             continue;
                         }
-
 
                         var (roles, authPolicy, featurePolicy) = GetPolicysAndRoles(controller);
 
