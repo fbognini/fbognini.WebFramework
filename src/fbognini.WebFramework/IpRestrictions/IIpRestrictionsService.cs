@@ -1,7 +1,4 @@
-﻿using Microsoft.Extensions.Options;
-using System.Collections.Generic;
-
-namespace fbognini.WebFramework.IpRestrictions
+﻿namespace fbognini.WebFramework.IpRestrictions
 {
     public interface IIpRestrictionsService
     {

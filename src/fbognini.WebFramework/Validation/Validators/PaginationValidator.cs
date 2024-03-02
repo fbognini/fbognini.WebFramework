@@ -1,10 +1,5 @@
-﻿using fbognini.Core.Data.Pagination;
+﻿using fbognini.Core.Domain.Query.Pagination;
 using FluentValidation;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace fbognini.WebFramework.Validation
 {

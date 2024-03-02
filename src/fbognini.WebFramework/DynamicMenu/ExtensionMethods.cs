@@ -1,6 +1,5 @@
 ﻿using fbognini.WebFramework.Authorization;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.FeatureManagement.Mvc;

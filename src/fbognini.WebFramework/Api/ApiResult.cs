@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using fbognini.Core.Domain.Query.Pagination;
+using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using fbognini.Core.Data.Pagination;
 
 namespace fbognini.WebFramework.Api
 {

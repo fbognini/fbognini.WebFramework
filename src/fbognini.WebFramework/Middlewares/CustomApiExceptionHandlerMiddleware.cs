@@ -11,11 +11,8 @@ using Microsoft.Extensions.Hosting;
 using fbognini.WebFramework.Api;
 using System.IO;
 using Microsoft.IdentityModel.Tokens;
-using fbognini.Core.Interfaces;
 using System.Text.Json;
-using Microsoft.Extensions.DependencyInjection;
 using fbognini.WebFramework.Validation;
-using Microsoft.AspNetCore.Http.Extensions;
 using System.Text.Json.Serialization;
 
 namespace fbognini.WebFramework.Middlewares

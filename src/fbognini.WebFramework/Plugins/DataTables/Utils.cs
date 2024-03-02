@@ -1,5 +1,5 @@
-﻿using fbognini.Core.Data;
-using fbognini.Core.Data.Pagination;
+﻿using fbognini.Core.Domain.Query;
+using fbognini.Core.Domain.Query.Pagination;
 using System;
 using System.Collections.Generic;
 

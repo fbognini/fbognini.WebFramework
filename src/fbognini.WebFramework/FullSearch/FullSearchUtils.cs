@@ -1,27 +1,25 @@
-﻿using fbognini.Core.Data;
-using fbognini.Core.Data.Pagination;
+﻿using fbognini.Core.Domain.Query;
+using fbognini.Core.Domain.Query.Pagination;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace fbognini.WebFramework.FullSearch
 {
     public static class FullSearchUtils
     {
-        public static SelectCriteria<TEntity> LoadFullSearchQuery<TEntity>(this SelectCriteria<TEntity> criteria, IFullSearchQuery query)
+        public static QueryableCriteria<TEntity> LoadFullSearchQuery<TEntity>(this QueryableCriteria<TEntity> criteria, IFullSearchQuery query)
         {
             return criteria.LoadFullSearchQuery(query, new List<Expression<Func<TEntity, object>>>());
         }
 
-        public static SelectCriteria<TEntity> LoadFullSearchQuery<TEntity>(this SelectCriteria<TEntity> criteria, IFullSearchQuery query, Expression<Func<TEntity, object>> searchField)
+        public static QueryableCriteria<TEntity> LoadFullSearchQuery<TEntity>(this QueryableCriteria<TEntity> criteria, IFullSearchQuery query, Expression<Func<TEntity, object>> searchField)
         {
             return criteria.LoadFullSearchQuery(query, new List<Expression<Func<TEntity, object>>>() { searchField });
         }
 
-        public static SelectCriteria<TEntity> LoadFullSearchQuery<TEntity>(this SelectCriteria<TEntity> criteria, IFullSearchQuery query, List<Expression<Func<TEntity, object>>> searchFields)
+        public static QueryableCriteria<TEntity> LoadFullSearchQuery<TEntity>(this QueryableCriteria<TEntity> criteria, IFullSearchQuery query, List<Expression<Func<TEntity, object>>> searchFields)
         {
             ArgumentNullException.ThrowIfNull(query.FullSearch);
 

@@ -1,5 +1,4 @@
-﻿using fbognini.Core.Exceptions;
-using MediatR;
+﻿using MediatR;
 
 namespace WebApplicationMinimalApi.Handlers.WeatherForecasts.GetWeaterForecast;
 

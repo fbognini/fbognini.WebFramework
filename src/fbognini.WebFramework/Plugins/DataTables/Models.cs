@@ -1,4 +1,4 @@
-﻿using fbognini.Core.Data.Pagination;
+﻿using fbognini.Core.Domain.Query.Pagination;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 

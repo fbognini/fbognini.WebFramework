@@ -5,7 +5,6 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
 using fbognini.Core.Exceptions;
-using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Routing;

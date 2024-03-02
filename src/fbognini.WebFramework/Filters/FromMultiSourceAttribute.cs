@@ -1,12 +1,5 @@
-﻿using fbognini.Core.Data.Pagination;
-using fbognini.WebFramework.Api;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.AspNetCore.WebUtilities;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System;
-using System.Linq;
-using System.Net;
 
 namespace fbognini.WebFramework.Filters
 {

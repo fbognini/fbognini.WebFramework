@@ -1,6 +1,4 @@
-﻿using fbognini.WebFramework.Filters;
-using fbognini.WebFramework.Handlers;
-using MediatR;
+﻿using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

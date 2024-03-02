@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
-using System.Security.Policy;
+﻿using System.Collections.Generic;
 
 namespace fbognini.WebFramework.DynamicMenu
 {

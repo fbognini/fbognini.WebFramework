@@ -1,4 +1,4 @@
-﻿using fbognini.Core.Data.Pagination;
+﻿using fbognini.Core.Domain.Query.Pagination;
 using fbognini.WebFramework.Api;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;

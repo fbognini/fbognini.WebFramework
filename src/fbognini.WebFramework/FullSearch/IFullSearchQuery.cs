@@ -1,10 +1,6 @@
-﻿using fbognini.Core.Data.Pagination;
-using fbognini.Core.Data;
-using System;
+﻿using fbognini.Core.Domain.Query.Pagination;
+using fbognini.Core.Domain.Query;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace fbognini.WebFramework.FullSearch
 {

@@ -1,10 +1,4 @@
-﻿using fbognini.WebFramework.Filters;
-using fbognini.WebFramework.Handlers;
-using MediatR;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Routing;
+﻿using Microsoft.AspNetCore.Mvc;
 
 #if NET7_0
 namespace fbognini.WebFramework.Handlers

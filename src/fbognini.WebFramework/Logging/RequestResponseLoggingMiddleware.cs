@@ -29,7 +29,7 @@ namespace fbognini.WebFramework.Logging
         private readonly RequestDelegate next;
         private bool LogRequest { get; set; }
         private bool LogResponse { get; set; }
-        private IEnumerable<RequestAdditionalParameter> AdditionalParameters { get; set; }
+        private IEnumerable<RequestAdditionalParameter> AdditionalParameters { get; set; } = Enumerable.Empty<RequestAdditionalParameter>();
 
 
         public RequestResponseLoggingMiddleware(RequestDelegate next)
