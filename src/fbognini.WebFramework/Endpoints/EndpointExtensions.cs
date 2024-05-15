@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using fbognini.WebFramework.Handlers.Problems;
+using Microsoft.AspNetCore.Mvc;
 
 namespace fbognini.WebFramework.Endpoints;
 
@@ -31,7 +32,7 @@ public static class EndpointExtensions
 
     public static RouteHandlerBuilder ProducesNotFound(this RouteHandlerBuilder builder)
     {
-        return builder.Produces<NotFoundProblemDetails>(404);
+        return builder.Produces<ProblemDetails>(404);
     }
 
     private static void AddEndpoints(this IServiceCollection services,

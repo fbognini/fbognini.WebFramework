@@ -3,8 +3,10 @@ using fbognini.WebFramework.Handlers.Problems;
 using FluentValidation;
 using LinqKit;
 using MediatR.Pipeline;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -19,10 +21,12 @@ namespace fbognini.WebFramework.Handlers
         where TResponse : IResult
         where TException : Exception
     {
+        private readonly IWebHostEnvironment env;
         private readonly ILogger<GenericExceptionHandler<TRequest, TResponse, TException>> logger;
 
-        public GenericExceptionHandler(ILogger<GenericExceptionHandler<TRequest, TResponse, TException>> logger)
+        public GenericExceptionHandler(IWebHostEnvironment env, ILogger<GenericExceptionHandler<TRequest, TResponse, TException>> logger)
         {
+            this.env = env;
             this.logger = logger;
         }
 
@@ -57,47 +61,19 @@ namespace fbognini.WebFramework.Handlers
         {
             logger.LogError(exception, "That's strange. An AppException occourred during {RequestName}. Flow shouldn't be managed by exceptions", typeof(TRequest).Name);
 
-            if (exception is NotFoundException notFoundException)
-            {
-                return Results.NotFound(new NotFoundProblemDetails(notFoundException));
-            }
-
-            var response = new AppProblemDetails(exception);
-            var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
-
-            if (exception.AdditionalData != null)
-            {
-                JsonSerializer.Deserialize<Dictionary<string, object>>(JsonSerializer.Serialize(exception.AdditionalData, options)).ForEach((pair) =>
-                {
-                    response.Extensions.Add(pair.Key, pair.Value);
-                });
-            }
-
-#if NET6_0
-            return Results.Json(response, options, statusCode: response.Status!.Value);
-#else
-            return Results.Json<ProblemDetails>(response, options, statusCode: response.Status!.Value);
-#endif
-
+            return Results.Extensions.AppException(exception);
         }
 
         private IResult HandleSystemException(Exception exception)
         {
             logger.LogError(exception, "Ops. An unexpected exception occourred during {RequestName}", typeof(TRequest).Name);
 
-            var response = new ProblemDetails()
+            if (env.IsDevelopment())
             {
-                Status = 500,
-                Title = "InternalServerError"
-            };
-            var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+                return Results.Extensions.ExplicitException(exception);
+            }
 
-#if NET6_0
-            return Results.Json(response, options, statusCode: 500);
-#else
-            return Results.Json<ProblemDetails>(response, options, statusCode: 500);
-#endif
-
+            return Results.Extensions.Exception(exception);
         }
     }
 }

@@ -29,6 +29,7 @@ namespace fbognini.WebFramework.Logging
         {
             if (sqlOptions?.Retention is null)
             {
+                logger.LogInformation("No retention, logs table should be deleted manually");
                 return;
             }
 
@@ -51,7 +52,7 @@ namespace fbognini.WebFramework.Logging
         {
             try
             {
-                logger.LogInformation("Manage retentions of {days} for [{schema}].[{table}]", sqlOptions!.Retention!.Days, sqlOptions!.SchemaName, sqlOptions!.TableName);
+                logger.LogInformation("Manage retentions of {Days} days for [{SchemaName}].[{TableName}]", sqlOptions!.Retention!.Days, sqlOptions!.SchemaName, sqlOptions!.TableName);
 
                 ValidateSettings();
 
@@ -63,11 +64,11 @@ namespace fbognini.WebFramework.Logging
                     sqlOptions!.Retention.BatchSize,
                     cancellationToken);
 
-                logger.LogInformation("Successfully deleted {rows} rows deleted from [{schema}].[{table}]", total, sqlOptions!.SchemaName, sqlOptions!.TableName);
+                logger.LogInformation("Successfully deleted {rows} rows deleted from [{SchemaName}].[{TableName}]", total, sqlOptions!.SchemaName, sqlOptions!.TableName);
             }
             catch (SqlException ex)
             {
-                logger.LogError(ex, "An SqlException occours during DeletePreviousRows from [{schema}].[{table}]", sqlOptions!.SchemaName, sqlOptions!.TableName);
+                logger.LogError(ex, "An SqlException occours during DeletePreviousRows from [{SchemaName}].[{TableName}]", sqlOptions!.SchemaName, sqlOptions!.TableName);
             }
         }
 
@@ -121,7 +122,7 @@ SELECT @Total
 
                 total += deleted;
 
-                logger.LogInformation("{rows} rows deleted from [{schema}].[{table}] in {seconds} seconds", total, sqlOptions!.SchemaName, sqlOptions!.TableName, watch.Elapsed.TotalSeconds);
+                logger.LogInformation("{NoOfDeletedRows} rows deleted from [{SchemaName}].[{TableName}] in {seconds} seconds ({NoOfDeletedRowsInTotal} in total)", deleted, sqlOptions!.SchemaName, sqlOptions!.TableName, watch.Elapsed.TotalSeconds, total);
 
             } while (deleted != 0);
 

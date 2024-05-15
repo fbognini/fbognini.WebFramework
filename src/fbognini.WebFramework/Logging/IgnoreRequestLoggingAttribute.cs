@@ -33,13 +33,13 @@ namespace fbognini.WebFramework.Logging
         /// <summary>
         /// log but no request (or response) column
         /// </summary>
-        /// <param name="ignorerequest"></param>
-        /// <param name="ignoreresponse"></param>
-        public IgnoreRequestLoggingAttribute(bool ignorerequest, bool ignoreresponse)
+        /// <param name="ignoreRequest"></param>
+        /// <param name="ignoreResponse"></param>
+        public IgnoreRequestLoggingAttribute(bool ignoreRequest, bool ignoreResponse)
         {
             mode = RequestLoggingAttributeMode.Force;
-            IgnoreRequestLogging = ignorerequest;
-            IgnoreResponseLogging = ignoreresponse;
+            IgnoreRequestLogging = ignoreRequest;
+            IgnoreResponseLogging = ignoreResponse;
         }
 
         public bool IgnoreLogging => mode == RequestLoggingAttributeMode.Ignore;

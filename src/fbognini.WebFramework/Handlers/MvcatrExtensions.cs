@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-#if NET7_0
+#if NET7_0_OR_GREATER
 namespace fbognini.WebFramework.Handlers
 {
     public static class MvcatrExtensions

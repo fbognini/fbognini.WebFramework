@@ -1,4 +1,6 @@
-﻿using MediatR;
+﻿using fbognini.Core.Exceptions;
+using MediatR;
+using Microsoft.AspNetCore.Mvc;
 
 namespace WebApplicationMinimalApi.Handlers.WeatherForecasts.GetWeaterForecast;
 
@@ -16,6 +18,9 @@ public class GetWeatherForecastQueryHandler: IRequestHandler<GetWeatherForecastQ
     {
         //throw new BadRequestException();
         //throw new NotFoundException(typeof(WeatherForecast), 52);
+
+        throw new Exception();
+
 
         var summaries = new[]
         {
