@@ -59,6 +59,13 @@ namespace fbognini.WebFramework.Logging
                 return;
             }
 
+            var hub = endpoint.Metadata.OfType<Microsoft.AspNetCore.SignalR.HubMetadata>().LastOrDefault();
+            if (hub != null)
+            {
+                await next(context);
+                return;
+            }
+
             if (context.Request.Method.Equals("OPTIONS", StringComparison.InvariantCultureIgnoreCase)
                 || context.Request.Method.Equals("HEAD", StringComparison.InvariantCultureIgnoreCase))
             {
