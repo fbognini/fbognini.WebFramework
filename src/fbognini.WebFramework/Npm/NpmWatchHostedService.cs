@@ -13,13 +13,15 @@ namespace fbognini.WebFramework.Npm
     {
         private readonly bool _enabled;
         private readonly ILogger<NpmWatchHostedService> _logger;
+        private readonly string _path;
 
         private Process? _process;
 
-        public NpmWatchHostedService(bool enabled, ILogger<NpmWatchHostedService> logger)
+        public NpmWatchHostedService(bool enabled, ILogger<NpmWatchHostedService> logger, string path)
         {
             _enabled = enabled;
             _logger = logger;
+            _path = path;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -53,7 +55,7 @@ namespace fbognini.WebFramework.Npm
         {
             _process = new Process();
             _process.StartInfo.FileName = Path.Join(Directory.GetCurrentDirectory(), "node_modules/.bin/sass" + (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".cmd" : ""));
-            _process.StartInfo.Arguments = "--watch Styles:wwwroot/css";
+            _process.StartInfo.Arguments = $"--watch {_path}";
             _process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             _process.StartInfo.CreateNoWindow = true;
             _process.StartInfo.UseShellExecute = false;

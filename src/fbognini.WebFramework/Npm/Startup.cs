@@ -8,11 +8,12 @@ namespace fbognini.WebFramework.Npm
 {
     public static class Startup
     {
-        public static IServiceCollection AddNpmWatch(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddNpmWatch(this IServiceCollection services, IConfiguration configuration, string path = "Styles:wwwroot/css")
         {
             services.AddHostedService(sp => new NpmWatchHostedService(
                 enabled: sp.GetRequiredService<IWebHostEnvironment>().IsDevelopment(),
-                logger: sp.GetRequiredService<ILogger<NpmWatchHostedService>>()));
+                logger: sp.GetRequiredService<ILogger<NpmWatchHostedService>>(),
+                path));
 
             return services;
         }
