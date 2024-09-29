@@ -8,7 +8,7 @@ namespace fbognini.WebFramework.FullSearch
     {
         public string? Search { get; set; }
         public PaginationOffsetQuery? Pagination { get; set; }
-        public List<SortingQuery> Sortings { get; set; } = new();
+        public Dictionary<string, SortingDirection> Sortings { get; set; } = new();
     }
 
     public interface IFullSearchQuery

@@ -25,7 +25,7 @@ namespace fbognini.WebFramework.FullSearch
 
             foreach (var sorting in query.FullSearch.Sortings)
             {
-                criteria.LoadSortingQuery(sorting);
+                criteria.AddSorting(sorting.Key, sorting.Value);
             }
             if (query.FullSearch.Pagination != null)
             {
@@ -46,7 +46,7 @@ namespace fbognini.WebFramework.FullSearch
             ArgumentNullException.ThrowIfNull(query);
             ArgumentNullException.ThrowIfNull(search);
 
-            if (search.OrderBys.Count != search.OrderDirections.Count)
+            if (search.SortColumns.Count != search.SortDirections.Count)
             {
                 throw new ArgumentException("Sortings are not valid");
             }
@@ -77,12 +77,15 @@ namespace fbognini.WebFramework.FullSearch
             query.FullSearch = new FullSearch
             {
                 Search = search.Search,
-                Sortings = new List<SortingQuery>()
+                Sortings = new()
             };
 
-            for (int i = 0; i < search.OrderBys.Count; i++)
+            for (int i = 0; i < search.SortColumns.Count; i++)
             {
-                query.FullSearch.Sortings.Add(new SortingQuery(search.OrderBys.ElementAt(i), search.OrderDirections.ElementAt(i).Equals("asc", StringComparison.OrdinalIgnoreCase) ? SortingDirection.ASCENDING : SortingDirection.DESCENDING));
+                var column = search.SortColumns.ElementAt(i);
+                var direction = search.SortDirections.ElementAt(i).Equals("asc", StringComparison.OrdinalIgnoreCase) ? SortingDirection.ASCENDING : SortingDirection.DESCENDING;
+
+                query.FullSearch.Sortings.Add(column, direction);
             }
 
             if (search.PageSize.HasValue)

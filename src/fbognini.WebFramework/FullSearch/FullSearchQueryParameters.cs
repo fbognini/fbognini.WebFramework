@@ -14,8 +14,8 @@ namespace fbognini.WebFramework.FullSearch
         [FromQuery(Name = "start")]
         public int? StartIndex { get; set; }
         [FromQuery(Name = "sort-by")]
-        public List<string> OrderBys { get; set; } = new();
+        public List<string> SortColumns { get; set; } = new();
         [FromQuery(Name = "sort-dir")]
-        public List<string> OrderDirections { get; set; } = new();
+        public List<string> SortDirections { get; set; } = new();
     }
 }
