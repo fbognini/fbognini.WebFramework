@@ -3,7 +3,7 @@
 	<PropertyGroup>
 		<PackageId>fbognini.WebFramework</PackageId>
 		<TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
-		<Version>10.0.5</Version>
+		<Version>10.0.6</Version>
 		<Authors>Francesco Bognini</Authors>
 		<Company>Francesco Bognini</Company>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
@@ -34,6 +34,7 @@
 
 
 	<ItemGroup Condition=" '$(TargetFramework)' == 'net8.0' ">
+		<PackageReference Include="FastIDs.TypeId.Serialization.SystemTextJson" Version="1.0.0" />
 		<PackageReference Include="MediatR" Version="12.2.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Localization.Abstractions" Version="8.0.0" />
@@ -42,6 +43,7 @@
 	</ItemGroup>
 
 	<ItemGroup Condition=" '$(TargetFramework)' == 'net7.0' ">
+		<PackageReference Include="FastIDs.TypeId.Serialization.SystemTextJson" Version="0.2.3" />
 		<PackageReference Include="MediatR" Version="12.2.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Localization.Abstractions" Version="7.0.0" />
@@ -50,6 +52,7 @@
 	</ItemGroup>
 
 	<ItemGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
+		<PackageReference Include="FastIDs.TypeId.Serialization.SystemTextJson" Version="0.2.3" />
 		<PackageReference Include="MediatR" Version="12.1.1" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Localization.Abstractions" Version="6.0.0" />

@@ -1,4 +1,5 @@
-﻿using fbognini.Core.Interfaces;
+﻿using FastIDs.TypeId.Serialization.SystemTextJson;
+using fbognini.Core.Interfaces;
 using fbognini.WebFramework.Filters;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
@@ -23,6 +24,12 @@ namespace fbognini.WebFramework.Logging
 {
     internal class RequestResponseLoggingMiddleware
     {
+        private static readonly JsonSerializerOptions _jsonSerializerOptions = new JsonSerializerOptions()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            ReferenceHandler = ReferenceHandler.IgnoreCycles
+        }.ConfigureForTypeId();
+
         public const string ApiLoggingProperty = "ApiLogging";
 
         private readonly RecyclableMemoryStreamManager recyclableMemoryStreamManager;
@@ -387,11 +394,7 @@ namespace fbognini.WebFramework.Logging
 
         private static string Serialize(object model)
         {
-            return JsonSerializer.Serialize(model, new JsonSerializerOptions()
-            {
-                ReferenceHandler = ReferenceHandler.IgnoreCycles,
-                WriteIndented = false
-            });
+            return JsonSerializer.Serialize(model, _jsonSerializerOptions);
         }
 
         private void LoadOptions(HttpContext context)
