@@ -12,6 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\fbognini.WebFramework.Logging.MSSqlServer\fbognini.WebFramework.Logging.MSSqlServer.csproj" />
     <ProjectReference Include="..\..\src\fbognini.WebFramework\fbognini.WebFramework.csproj" />
   </ItemGroup>
 

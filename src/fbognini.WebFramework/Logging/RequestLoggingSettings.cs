@@ -1,17 +1,7 @@
-﻿using Serilog.Sinks.MSSqlServer;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace fbognini.WebFramework.Logging
 {
-    public class SqlOptions
-    {
-        public string ConnectionString { get; set; }
-        public string TableName { get; set; }
-        public string SchemaName { get; set; }
-        public string ColumnName { get; set; } = "TimeStamp";
-        public RetentionOptions? Retention { get; set; }
-        public Dictionary<string, SqlColumn> AdditionalColumns { get; set; }
-    }
 
     public class RetentionOptions
     {

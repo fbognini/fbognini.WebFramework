@@ -14,26 +14,25 @@ namespace fbognini.WebFramework.Logging
 {
     internal class RequestLoggingSqlManageRetentionWorker : BackgroundService
     {
-        private readonly SqlOptions? sqlOptions;
+        private readonly IOptions<RequestLoggingSettings> _requestLoggingOptions;
+        private readonly ILogger<RequestLoggingSqlManageRetentionWorker> _logger;
 
-        private readonly ILogger<RequestLoggingSqlManageRetentionWorker> logger;
-
-        public RequestLoggingSqlManageRetentionWorker(IOptions<RequestLoggingSettings> options, ILogger<RequestLoggingSqlManageRetentionWorker> logger)
+        public RequestLoggingSqlManageRetentionWorker(IOptions<RequestLoggingSettings> requestLoggingOptions, ILogger<RequestLoggingSqlManageRetentionWorker> logger)
         {
-            sqlOptions = options.Value.SqlOptions;
-
-            this.logger = logger;
+            _requestLoggingOptions = requestLoggingOptions;
+            _logger = logger;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            var sqlOptions = _requestLoggingOptions.Value.SqlOptions;
             if (sqlOptions?.Retention is null)
             {
-                logger.LogInformation("No retention, logs table should be deleted manually");
+                _logger.LogInformation("No retention, logs table should be deleted manually");
                 return;
             }
 
-            ValidateSettings();
+            ValidateSettings(sqlOptions);
 
             if (sqlOptions!.Retention!.RunOnStartup)
             {
@@ -50,11 +49,13 @@ namespace fbognini.WebFramework.Logging
 
         private async Task DoWork(CancellationToken cancellationToken)
         {
+            var sqlOptions = _requestLoggingOptions.Value.SqlOptions;
+
             try
             {
-                logger.LogInformation("Manage retentions of {Days} days for [{SchemaName}].[{TableName}]", sqlOptions!.Retention!.Days, sqlOptions!.SchemaName, sqlOptions!.TableName);
+                _logger.LogInformation("Manage retentions of {Days} days for [{SchemaName}].[{TableName}]", sqlOptions!.Retention!.Days, sqlOptions!.SchemaName, sqlOptions!.TableName);
 
-                ValidateSettings();
+                ValidateSettings(sqlOptions);
 
                 var total = await DeletePreviousRows(
                     sqlOptions!.TableName,
@@ -64,16 +65,18 @@ namespace fbognini.WebFramework.Logging
                     sqlOptions!.Retention.BatchSize,
                     cancellationToken);
 
-                logger.LogInformation("Successfully deleted {rows} rows deleted from [{SchemaName}].[{TableName}]", total, sqlOptions!.SchemaName, sqlOptions!.TableName);
+                _logger.LogInformation("Successfully deleted {rows} rows deleted from [{SchemaName}].[{TableName}]", total, sqlOptions!.SchemaName, sqlOptions!.TableName);
             }
             catch (SqlException ex)
             {
-                logger.LogError(ex, "An SqlException occours during DeletePreviousRows from [{SchemaName}].[{TableName}]", sqlOptions!.SchemaName, sqlOptions!.TableName);
+                _logger.LogError(ex, "An SqlException occours during DeletePreviousRows from [{SchemaName}].[{TableName}]", sqlOptions!.SchemaName, sqlOptions!.TableName);
             }
         }
 
         private async Task<long> DeletePreviousRows(string table, string schema, string column, DateTime date, int batch, CancellationToken cancellationToken)
         {
+            var sqlOptions = _requestLoggingOptions.Value.SqlOptions;
+
             var sql = @$"
 DECLARE @Total BIGINT = 0
 DECLARE @sql NVARCHAR(MAX);
@@ -122,7 +125,7 @@ SELECT @Total
 
                 total += deleted;
 
-                logger.LogInformation("{NoOfDeletedRows} rows deleted from [{SchemaName}].[{TableName}] in {seconds} seconds ({NoOfDeletedRowsInTotal} in total)", deleted, sqlOptions!.SchemaName, sqlOptions!.TableName, watch.Elapsed.TotalSeconds, total);
+                _logger.LogInformation("{NoOfDeletedRows} rows deleted from [{SchemaName}].[{TableName}] in {seconds} seconds ({NoOfDeletedRowsInTotal} in total)", deleted, sqlOptions!.SchemaName, sqlOptions!.TableName, watch.Elapsed.TotalSeconds, total);
 
             } while (deleted != 0);
 
@@ -130,8 +133,10 @@ SELECT @Total
             return total;
         }
 
-        private void ValidateSettings()
+        private static void ValidateSettings(SqlOptions sqlOptions)
         {
+            ArgumentNullException.ThrowIfNull(sqlOptions, nameof(sqlOptions));
+
             if (sqlOptions!.Retention!.Days < 1)
             {
                 throw new ArgumentOutOfRangeException(nameof(RetentionOptions.Days), sqlOptions!.Retention.Days, "Should be greater than zero.");

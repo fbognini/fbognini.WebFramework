@@ -1,6 +1,7 @@
 using fbognini.WebFramework.Handlers;
 using fbognini.WebFramework.Behaviours;
 using WebApplicationMinimalApi.Handlers.WeatherForecasts.GetWeaterForecast;
+using fbognini.WebFramework.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +9,11 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddSerilogSelfLogging();
+
+builder.Services.AddRequestLogging(builder.Configuration)
+    .WithMSSqlServer();
 
 builder.Services.AddMediatR(cfg =>
 {
