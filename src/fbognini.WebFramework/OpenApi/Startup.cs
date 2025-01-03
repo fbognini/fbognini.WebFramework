@@ -17,7 +17,7 @@ public static class Startup
     public static IServiceCollection AddOpenApiDocumentation(this IServiceCollection services, IConfiguration configuration, Action<SwaggerGenOptions>? configure = null)
     {
         var settings = configuration.GetSection(nameof(SwaggerSettings)).Get<SwaggerSettings>();
-        if (!settings.Enable)
+        if (settings?.Enable != true)
         {
             return services;
         }
