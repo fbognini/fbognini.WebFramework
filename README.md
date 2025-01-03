@@ -1,3 +1,3 @@
 # fbognini.WebFramework
 
-Work in progess
+An opinionated set of plugins and methods for building web applications.
