@@ -22,27 +22,31 @@ using System.Web;
 
 namespace fbognini.WebFramework.Logging
 {
-    internal class RequestResponseLoggingMiddleware
+    public sealed class RequestResponseLoggingMiddleware
     {
-        private static readonly JsonSerializerOptions _jsonSerializerOptions = new JsonSerializerOptions()
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            ReferenceHandler = ReferenceHandler.IgnoreCycles
-        }.ConfigureForTypeId();
-
         public const string ApiLoggingProperty = "ApiLogging";
 
-        private readonly RecyclableMemoryStreamManager recyclableMemoryStreamManager;
-        private readonly RequestDelegate next;
+        private readonly RequestDelegate _next;
+
+        private static readonly JsonSerializerOptions _jsonSerializerOptions = 
+            new JsonSerializerOptions()
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                ReferenceHandler = ReferenceHandler.IgnoreCycles
+            }
+            .ConfigureForTypeId();
+
+
+        private readonly RecyclableMemoryStreamManager _recyclableMemoryStreamManager = new RecyclableMemoryStreamManager();
+
+
         private bool LogRequest { get; set; }
         private bool LogResponse { get; set; }
         private IEnumerable<RequestAdditionalParameter> AdditionalParameters { get; set; } = Enumerable.Empty<RequestAdditionalParameter>();
 
-
         public RequestResponseLoggingMiddleware(RequestDelegate next)
         {
-            recyclableMemoryStreamManager = new RecyclableMemoryStreamManager();
-            this.next = next;
+            _next = next;
         }
 
         public async Task Invoke(HttpContext context)
@@ -55,28 +59,28 @@ namespace fbognini.WebFramework.Logging
 
             if (endpoint == null)
             {
-                await next(context);
+                await _next(context);
                 return;
             }
 
             var ignoreLogging = endpoint.Metadata.OfType<IgnoreRequestLoggingAttribute>().LastOrDefault();
             if (ignoreLogging != null && ignoreLogging.IgnoreLogging)
             {
-                await next(context);
+                await _next(context);
                 return;
             }
 
             var hub = endpoint.Metadata.OfType<Microsoft.AspNetCore.SignalR.HubMetadata>().LastOrDefault();
             if (hub != null)
             {
-                await next(context);
+                await _next(context);
                 return;
             }
 
             if (context.Request.Method.Equals("OPTIONS", StringComparison.InvariantCultureIgnoreCase)
                 || context.Request.Method.Equals("HEAD", StringComparison.InvariantCultureIgnoreCase))
             {
-                await next(context);
+                await _next(context);
                 return;
             }
 
@@ -126,14 +130,14 @@ namespace fbognini.WebFramework.Logging
 
             var originalResponseBody = context.Response.Body;
 
-            await using var responseBody = recyclableMemoryStreamManager.GetStream();
+            await using var responseBody = _recyclableMemoryStreamManager.GetStream();
             context.Response.Body = responseBody;
 
             Exception? exception = null;
 
             try
             {
-                await next(context);
+                await _next(context);
             }
             catch (Exception ex)
             {
@@ -239,7 +243,7 @@ namespace fbognini.WebFramework.Logging
 
         private async Task<string> GetRequest(HttpContext context)
         {
-            await using var requestStream = recyclableMemoryStreamManager.GetStream();
+            await using var requestStream = _recyclableMemoryStreamManager.GetStream();
 
             if (!context.Request.HasFormContentType)
             {
