@@ -130,7 +130,7 @@ public static class Startup
     public static IApplicationBuilder UseOpenApiDocumentation(this IApplicationBuilder app, IConfiguration config, Action<SwaggerUIOptions>? configure = null)
     {
         var settings = config.GetSection(nameof(SwaggerSettings)).Get<SwaggerSettings>();
-        if (!settings.Enable)
+        if (settings?.Enable != true)
         {
             return app;
         }
