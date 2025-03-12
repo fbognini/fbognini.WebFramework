@@ -1,4 +1,6 @@
-﻿using fbognini.Core.Exceptions;
+﻿using FastIDs.TypeId.Serialization.SystemTextJson;
+using fbognini.Core.Exceptions;
+using fbognini.WebFramework.JsonConverters;
 using LinqKit;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -8,14 +10,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace fbognini.WebFramework.Handlers.Problems
 {
     public static class ResultExtensions
     {
-        private static readonly JsonSerializerOptions _webJsonSerializerOptions = new(JsonSerializerDefaults.Web);
-
         public static IResult Exception(this IResultExtensions resultExtensions, Exception _)
         {
             ArgumentNullException.ThrowIfNull(resultExtensions);
@@ -112,7 +113,7 @@ namespace fbognini.WebFramework.Handlers.Problems
                 return;
             }
 
-            var dataAdDictionary = JsonSerializer.Deserialize<Dictionary<string, object?>>(JsonSerializer.Serialize(obj, _webJsonSerializerOptions));
+            var dataAdDictionary = JsonSerializer.Deserialize<Dictionary<string, object?>>(JsonSerializer.Serialize(obj, JsonSerializerHelper.WebOptions));
 
             original.AddExtensions(dataAdDictionary);
         }

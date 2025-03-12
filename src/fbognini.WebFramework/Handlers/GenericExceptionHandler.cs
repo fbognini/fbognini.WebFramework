@@ -1,5 +1,6 @@
 ﻿using fbognini.Core.Exceptions;
 using fbognini.WebFramework.Handlers.Problems;
+using fbognini.WebFramework.JsonConverters;
 using FluentValidation;
 using LinqKit;
 using MediatR.Pipeline;
@@ -43,7 +44,7 @@ namespace fbognini.WebFramework.Handlers
         {
             var propertys = new Dictionary<string, object>()
             {
-                ["Request"] = JsonSerializer.Serialize(request)
+                ["Request"] = JsonSerializer.Serialize(request, JsonSerializerHelper.LogOptions)
             };
 
             using (logger.BeginScope(propertys))

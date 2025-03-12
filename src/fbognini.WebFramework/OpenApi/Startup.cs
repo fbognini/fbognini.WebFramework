@@ -8,6 +8,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
 using System.Collections.Generic;
 using Swashbuckle.AspNetCore.SwaggerUI;
+using FastIDs.TypeId;
 
 namespace fbognini.WebFramework.OpenApi;
 
@@ -94,6 +95,9 @@ public static class Startup
                 Pattern = @"^([0-9]{1}|(?:0[0-9]|1[0-9]|2[0-3])+):([0-5]?[0-9])(?::([0-5]?[0-9])(?:.(\d{1,9}))?)?$",
                 Example = new OpenApiString("02:00:00")
             });
+
+            options.MapType(typeof(TypeId), () => new OpenApiSchema { Type = "string", Example = new OpenApiString("prefix_01h93ech7jf5ktdwg6ye383x34") });
+            options.MapType(typeof(TypeIdDecoded), () => new OpenApiSchema { Type = "string", Example = new OpenApiString("prefix_01h93ech7jf5ktdwg6ye383x34") });
 
             options.DocumentFilter<HideOcelotControllersFilter>();
             options.OperationFilter<SwaggerHeaderAttributeOperationFilter>();
