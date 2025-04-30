@@ -10,30 +10,35 @@ namespace fbognini.WebFramework.FullSearch
     public static class FullSearchUtils
     {
         public static QueryableCriteria<TEntity> LoadFullSearchQuery<TEntity>(this QueryableCriteria<TEntity> criteria, IFullSearchQuery query)
-        {
-            return criteria.LoadFullSearchQuery(query, new List<Expression<Func<TEntity, object>>>());
-        }
+            => criteria.LoadFullSearch(query.FullSearch);
 
         public static QueryableCriteria<TEntity> LoadFullSearchQuery<TEntity>(this QueryableCriteria<TEntity> criteria, IFullSearchQuery query, Expression<Func<TEntity, object>> searchField)
-        {
-            return criteria.LoadFullSearchQuery(query, new List<Expression<Func<TEntity, object>>>() { searchField });
-        }
+            => criteria.LoadFullSearch(query.FullSearch, searchField);
 
         public static QueryableCriteria<TEntity> LoadFullSearchQuery<TEntity>(this QueryableCriteria<TEntity> criteria, IFullSearchQuery query, List<Expression<Func<TEntity, object>>> searchFields)
-        {
-            ArgumentNullException.ThrowIfNull(query.FullSearch);
+            => criteria.LoadFullSearch(query.FullSearch, searchFields);
 
-            foreach (var sorting in query.FullSearch.Sortings)
+        public static QueryableCriteria<TEntity> LoadFullSearch<TEntity>(this QueryableCriteria<TEntity> criteria, FullSearch fullSearch)
+            => criteria.LoadFullSearch(fullSearch, new List<Expression<Func<TEntity, object>>>());
+
+        public static QueryableCriteria<TEntity> LoadFullSearch<TEntity>(this QueryableCriteria<TEntity> criteria, FullSearch fullSearch, Expression<Func<TEntity, object>> searchField)
+            => criteria.LoadFullSearch(fullSearch, new List<Expression<Func<TEntity, object>>>() { searchField });
+
+        public static QueryableCriteria<TEntity> LoadFullSearch<TEntity>(this QueryableCriteria<TEntity> criteria, FullSearch fullSearch, List<Expression<Func<TEntity, object>>> searchFields)
+        {
+            ArgumentNullException.ThrowIfNull(fullSearch);
+
+            foreach (var sorting in fullSearch.Sortings)
             {
                 criteria.AddSorting(sorting.Key, sorting.Value);
             }
-            if (query.FullSearch.Pagination != null)
+            if (fullSearch.Pagination != null)
             {
-                criteria.LoadPaginationOffsetQuery(query.FullSearch.Pagination);
+                criteria.LoadPaginationOffsetQuery(fullSearch.Pagination);
             }
-            if (!string.IsNullOrEmpty(query.FullSearch.Search))
+            if (!string.IsNullOrEmpty(fullSearch.Search))
             {
-                criteria.Search.Keyword = query.FullSearch.Search;
+                criteria.Search.Keyword = fullSearch.Search;
                 criteria.Search.Fields.AddRange(searchFields);
             }
 
@@ -44,9 +49,17 @@ namespace fbognini.WebFramework.FullSearch
             where T: IFullSearchQuery
         {
             ArgumentNullException.ThrowIfNull(query);
+
+            query.FullSearch = search.ToFullSearch();
+
+            return query;
+        }
+
+        public static FullSearch ToFullSearch(this FullSearchQueryParameters search)
+        {
             ArgumentNullException.ThrowIfNull(search);
 
-            if (search.SortColumns.Count != search.SortDirections.Count)
+            if (search.SortColumns.Length != search.SortDirections.Length)
             {
                 throw new ArgumentException("Sortings are not valid");
             }
@@ -74,33 +87,34 @@ namespace fbognini.WebFramework.FullSearch
                 }
             }
 
-            query.FullSearch = new FullSearch
+            var fullSearch = new FullSearch
             {
                 Search = search.Search,
                 Sortings = new()
             };
 
-            for (int i = 0; i < search.SortColumns.Count; i++)
+            for (int i = 0; i < search.SortColumns.Length; i++)
             {
                 var column = search.SortColumns.ElementAt(i);
                 var direction = search.SortDirections.ElementAt(i).Equals("asc", StringComparison.OrdinalIgnoreCase) ? SortingDirection.ASCENDING : SortingDirection.DESCENDING;
 
-                query.FullSearch.Sortings.Add(column, direction);
+                fullSearch.Sortings.Add(column, direction);
             }
 
             if (search.PageSize.HasValue)
             {
                 if (search.StartIndex.HasValue)
                 {
-                    query.FullSearch.Pagination = new PaginationOffsetQuery(search.PageSize.Value, search.StartIndex.Value / search.PageSize.Value + 1);
+                    fullSearch.Pagination = new PaginationOffsetQuery(search.PageSize.Value, search.StartIndex.Value / search.PageSize.Value + 1);
                 }
                 else
                 {
-                    query.FullSearch.Pagination = new PaginationOffsetQuery(search.PageSize.Value, search.PageNumber.Value);
+                    fullSearch.Pagination = new PaginationOffsetQuery(search.PageSize.Value, search.PageNumber!.Value);
                 }
             }
 
-            return query;
+            return fullSearch;
         }
+
     }
 }
