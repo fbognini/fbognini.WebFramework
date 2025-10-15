@@ -142,7 +142,7 @@ namespace fbognini.WebFramework.Logging
             finally
             {
                 var responseDate = DateTime.UtcNow;
-                var elapsedMilliseconds = (responseDate - requestDate).Milliseconds;
+                var elapsedMilliseconds = (responseDate - requestDate).TotalMilliseconds;
 
                 try
                 {
