@@ -28,6 +28,7 @@ namespace fbognini.WebFramework.Logging
         public const string ApiLoggingProperty = "ApiLogging";
 
         private readonly RequestDelegate _next;
+        private ILogger<RequestResponseLoggingMiddleware>? logger;
 
 
         private readonly RecyclableMemoryStreamManager _recyclableMemoryStreamManager = new RecyclableMemoryStreamManager();
@@ -46,7 +47,7 @@ namespace fbognini.WebFramework.Logging
         {
             LoadOptions(context);
 
-            var logger = context.RequestServices.GetRequiredService<ILogger<RequestResponseLoggingMiddleware>>();
+            logger = context.RequestServices.GetRequiredService<ILogger<RequestResponseLoggingMiddleware>>();
             var endpoint = context
                 .GetEndpoint();
 
@@ -274,7 +275,7 @@ namespace fbognini.WebFramework.Logging
             return response;
         }
 
-        private static (string? Model, string? ViewData, string? TempData, string? RedirectTo) GetModel(HttpContext context)
+        private (string? Model, string? ViewData, string? TempData, string? RedirectTo) GetModel(HttpContext context)
         {
             var key = typeof(Microsoft.AspNetCore.Mvc.IUrlHelper);
             if (context.Items.TryGetValue(key, out var helper) == false || helper == null)
@@ -328,7 +329,8 @@ namespace fbognini.WebFramework.Logging
 
             return (null, null, null);
         }
-        private static string GetInvalidModelState(HttpContext context)
+
+        private string? GetInvalidModelState(HttpContext context)
         {
             var feature = context.Features.Get<ModelStateFeature>();
             if (feature == null || feature.ModelState == null || feature.ModelState.IsValid)
@@ -337,11 +339,11 @@ namespace fbognini.WebFramework.Logging
             }
 
             var errors = feature.ModelState
-                .Where(v => v.Value.Errors.Count > 0)
+                .Where(v => v.Value is not null && v.Value.Errors.Count > 0)
                 .Select(x => new
                 {
                     x.Key,
-                    Errors = x.Value.Errors.ToList()
+                    Errors = x.Value!.Errors.ToList()
                 });
 
             return Serialize(errors);
@@ -368,7 +370,7 @@ namespace fbognini.WebFramework.Logging
             return textWriter.ToString();
         }
 
-        private static string? SerializeModel(object? model)
+        private string? SerializeModel(object? model)
         {
             if (model is null)
             {
@@ -389,9 +391,17 @@ namespace fbognini.WebFramework.Logging
             return Serialize(dictionary);
         }
 
-        private static string Serialize(object model)
+        private string Serialize(object model)
         {
-            return JsonSerializer.Serialize(model, JsonSerializerHelper.LogOptions);
+            try
+            {
+                return JsonSerializer.Serialize(model, JsonSerializerHelper.LogOptions);
+            }
+            catch (NotSupportedException ex)
+            {
+                logger?.LogWarning(ex, "Unexpeted error during serialization of {ModelType}", ex.GetType());
+                return "[[SERIALIZATION ERROR]]";
+            }
         }
 
         private void LoadOptions(HttpContext context)

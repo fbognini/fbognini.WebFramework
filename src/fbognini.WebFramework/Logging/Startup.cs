@@ -69,7 +69,7 @@ namespace fbognini.WebFramework.Logging
             return optionsBuilder;
         }
 
-        public static OptionsBuilder<RequestLoggingSettings> IgnoreMvcResponses(this OptionsBuilder<RequestLoggingSettings> optionsBuilder)
+        public static OptionsBuilder<RequestLoggingSettings> IgnoreMvcAndRazorResponses(this OptionsBuilder<RequestLoggingSettings> optionsBuilder)
         {
             optionsBuilder
                 .Configure<IHttpContextAccessor>(
@@ -88,7 +88,7 @@ namespace fbognini.WebFramework.Logging
                         }
                         else
                         {
-                            if (context.Request.RouteValues.ContainsKey("controller"))
+                            if (context.Request.RouteValues.ContainsKey("controller") || context.Request.RouteValues.ContainsKey("page"))
                             {
                                 options.LogResponse = false;
                             }
