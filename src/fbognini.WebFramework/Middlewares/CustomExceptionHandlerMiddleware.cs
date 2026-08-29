@@ -76,9 +76,9 @@ namespace fbognini.WebFramework.Middlewares
             {
                 await next(context);
             }
-            catch (TaskCanceledException ex) when (ex.InnerException is not TimeoutException timeoutException)
+            catch (Exception exception) when (context.WasAbortedByClient(exception))
             {
-                logger.LogInformation("Task has been cancelled during request {Request}", context.Request.GetEncodedUrl());
+                logger.LogDebug("Request {Method} {Request} was aborted by the client", context.Request.Method, context.Request.GetEncodedUrl());
             }
             catch (NotFoundException exception)
             {

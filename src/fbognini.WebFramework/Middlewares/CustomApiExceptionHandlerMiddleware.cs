@@ -60,6 +60,10 @@ namespace fbognini.WebFramework.Middlewares
             {
                 await next(context);
             }
+            catch (Exception exception) when (context.WasAbortedByClient(exception))
+            {
+                logger.LogDebug("Request {Method} {Path}{Query} was aborted by the client", context.Request.Method, context.Request.Path.Value, context.Request.QueryString.Value);
+            }
             catch (AppException exception)
             {
                 httpStatusCode = exception.HttpStatusCode;
