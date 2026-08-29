@@ -2,6 +2,7 @@
 using fbognini.Core.Interfaces;
 using fbognini.WebFramework.Filters;
 using fbognini.WebFramework.JsonConverters;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -118,8 +119,7 @@ namespace fbognini.WebFramework.Logging
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Unexpeted error during logging web request {Path}{Query}", context.Request.Path.Value, context.Request.QueryString.Value);
-                throw;
+                logger.LogWarning(ex, "Unexpeted error during logging web request {Path}{Query}", context.Request.Path.Value, context.Request.QueryString.Value);
             }
 
             var originalResponseBody = context.Response.Body;
@@ -228,8 +228,8 @@ namespace fbognini.WebFramework.Logging
 
             context.Request.EnableBuffering();
 
+            context.Request.Body.Position = 0;
             string request = await GetRequest(context);
-
             context.Request.Body.Position = 0;
 
             return request;
@@ -251,7 +251,7 @@ namespace fbognini.WebFramework.Logging
                 var request = ReadStreamInChunks(requestStream);
 
                 var dict = HttpUtility.ParseQueryString(HttpUtility.UrlDecode(request));
-                return Serialize(dict.AllKeys.ToDictionary(k => k, k => dict[k]));
+                return Serialize(dict.AllKeys?.Where(x => !string.IsNullOrWhiteSpace(x)).ToDictionary(k => k!, k => dict[k]) ?? new Dictionary<string, string?>());
             }
 
             return Serialize(context.Request.Form.ToDictionary(k => k.Key, k => k.Value.First()));
