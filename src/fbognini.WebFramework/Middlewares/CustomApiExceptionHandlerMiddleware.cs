@@ -19,10 +19,21 @@ namespace fbognini.WebFramework.Middlewares
 {
     public static class CustomApiExceptionHandlerMiddlewareExtensions
     {
-        public static IApplicationBuilder UseCustomApiExceptionHandler(this IApplicationBuilder builder)
+        public static IApplicationBuilder UseCustomApiExceptionHandler(this IApplicationBuilder builder, Action<CustomApiExceptionHandlerOptions>? configure = null)
         {
-            return builder.UseMiddleware<CustomApiExceptionHandlerMiddleware>();
+            var options = new CustomApiExceptionHandlerOptions();
+            configure?.Invoke(options);
+
+            return builder.UseMiddleware<CustomApiExceptionHandlerMiddleware>(options);
         }
+    }
+
+    public class CustomApiExceptionHandlerOptions
+    {
+        public JsonSerializerOptions JsonSerializerOptions { get; set; } = new(JsonSerializerDefaults.Web)
+        {
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        };
     }
 
     public class CustomApiExceptionHandlerMiddleware
@@ -35,18 +46,21 @@ namespace fbognini.WebFramework.Middlewares
             typeof(UnauthorizedAccessException),
         };
 
-        private readonly RequestDelegate next;
-        private readonly IWebHostEnvironment env;
-        private readonly ILogger<CustomApiExceptionHandlerMiddleware> logger;
+        private readonly RequestDelegate _next;
+        private readonly IWebHostEnvironment _env;
+        private readonly ILogger<CustomApiExceptionHandlerMiddleware> _logger;
+        private readonly CustomApiExceptionHandlerOptions _options;
 
         public CustomApiExceptionHandlerMiddleware(
             RequestDelegate next,
             IWebHostEnvironment env,
-            ILogger<CustomApiExceptionHandlerMiddleware> logger)
+            ILogger<CustomApiExceptionHandlerMiddleware> logger,
+            CustomApiExceptionHandlerOptions options)
         {
-            this.next = next;
-            this.env = env;
-            this.logger = logger;
+            _next = next;
+            _env = env;
+            _logger = logger;
+            _options = options;
         }
 
         public async Task Invoke(HttpContext context)
@@ -58,11 +72,11 @@ namespace fbognini.WebFramework.Middlewares
 
             try
             {
-                await next(context);
+                await _next(context);
             }
             catch (Exception exception) when (context.WasAbortedByClient(exception))
             {
-                logger.LogDebug("Request {Method} {Path}{Query} was aborted by the client", context.Request.Method, context.Request.Path.Value, context.Request.QueryString.Value);
+                _logger.LogDebug("Request {Method} {Path}{Query} was aborted by the client", context.Request.Method, context.Request.Path.Value, context.Request.QueryString.Value);
             }
             catch (AppException exception)
             {
@@ -91,9 +105,9 @@ namespace fbognini.WebFramework.Middlewares
             }
             catch (Exception exception)
             {
-                DefaultExceptionLogging.Log(logger, context, exception);
+                DefaultExceptionLogging.Log(_logger, context, exception);
 
-                if (env.IsDevelopment())
+                if (_env.IsDevelopment())
                 {
                     SetExceptionMessage(exception);
                 }
@@ -109,7 +123,7 @@ namespace fbognini.WebFramework.Middlewares
                 }
 
                 var result = new ApiResult(false, httpStatusCode, message, validations, additionalData);
-                var json = JsonSerializer.Serialize(result, new JsonSerializerOptions(JsonSerializerDefaults.Web) { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
+                var json = JsonSerializer.Serialize(result, _options.JsonSerializerOptions);
 
                 context.Response.StatusCode = (int)httpStatusCode;
                 context.Response.ContentType = "application/json";
@@ -120,7 +134,7 @@ namespace fbognini.WebFramework.Middlewares
             {
                 httpStatusCode = HttpStatusCode.Unauthorized;
 
-                if (env.IsDevelopment())
+                if (_env.IsDevelopment())
                 {
                     SetExceptionMessage(exception);
                 }
