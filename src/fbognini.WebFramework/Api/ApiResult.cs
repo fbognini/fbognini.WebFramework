@@ -8,7 +8,7 @@ namespace fbognini.WebFramework.Api
 {
     public class ApiResult
     {
-        public bool IsSuccess { get; set; }
+        public bool OK { get; set; }
         public HttpStatusCode StatusCode { get; set; }
         public string? Message { get; set; }
 
@@ -16,13 +16,13 @@ namespace fbognini.WebFramework.Api
         public object? AdditionalData { get; set; }
 
         public ApiResult(
-            bool isSuccess,
+            bool ok,
             HttpStatusCode statusCode,
             string? message = null,
             IDictionary<string, string[]>? validations = null,
             object? additionalData = null)
         {
-            IsSuccess = isSuccess;
+            OK = ok;
             StatusCode = statusCode;
             Message = message;
             Validations = validations;
@@ -46,11 +46,11 @@ namespace fbognini.WebFramework.Api
         public TResponse? Response { get; set; }
 
         public ApiResult(
-            bool isSuccess,
+            bool ok,
             HttpStatusCode statusCode,
             TResponse? response,
             string? message = null)
-            : base(isSuccess, statusCode, message)
+            : base(ok, statusCode, message)
         {
             Response = response;
         }
@@ -117,11 +117,11 @@ namespace fbognini.WebFramework.Api
         public LinksResult? Links { get; set; }
 
         public ApiResult(
-            bool isSuccess,
+            bool ok,
             HttpStatusCode statusCode,
             PaginationResponse<TResponse> pagination,
             string? message = null)
-            : base(isSuccess, statusCode, message)
+            : base(ok, statusCode, message)
         {
             Pagination = pagination.Pagination;
             Response = pagination.Items;
