@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -90,6 +91,7 @@ namespace fbognini.WebFramework.Logging
             propertys.Add("Area", area);
             propertys.Add("Controller", controller);
             propertys.Add("Action", action);
+            propertys.Add("RoutePattern", (endpoint as RouteEndpoint)?.RoutePattern.RawText);
 
             var requestDate = DateTime.UtcNow;
 
