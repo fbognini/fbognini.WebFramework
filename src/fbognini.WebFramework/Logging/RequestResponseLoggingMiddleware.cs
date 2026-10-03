@@ -2,6 +2,7 @@
 using fbognini.Core.Interfaces;
 using fbognini.WebFramework.Filters;
 using fbognini.WebFramework.JsonConverters;
+using fbognini.WebFramework.Middlewares;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
@@ -117,9 +118,13 @@ namespace fbognini.WebFramework.Logging
                     logger.LogDebug("HTTP {Method} {Path}{Query} requested", context.Request.Method, context.Request.Path.Value, context.Request.QueryString.Value);
                 }
             }
+            catch (Exception ex) when (context.WasAbortedByClient(ex))
+            {
+                logger.LogDebug("Request {Method} {Path}{Query} was aborted by the client while it was being logged", context.Request.Method, context.Request.Path.Value, context.Request.QueryString.Value);
+            }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Unexpeted error during logging web request {Path}{Query}", context.Request.Path.Value, context.Request.QueryString.Value);
+                logger.LogWarning(ex, "Unexpected error during logging web request {Path}{Query}", context.Request.Path.Value, context.Request.QueryString.Value);
             }
 
             var originalResponseBody = context.Response.Body;
@@ -137,7 +142,11 @@ namespace fbognini.WebFramework.Logging
             {
                 exception = ex;
 
-                logger.LogWarning(ex, "Unexpected exception catched and rethrowned by logging middleware during pipeline execution");
+                if (!context.WasAbortedByClient(ex))
+                {
+                    logger.LogWarning(ex, "Unexpected exception catched and rethrowned by logging middleware during pipeline execution");
+                }
+
                 throw;
             }
             finally
@@ -176,7 +185,7 @@ namespace fbognini.WebFramework.Logging
                 }
                 catch (Exception ex)
                 {
-                    logger.LogWarning(ex, "Unexpeted error during logging web response {Path}{Query}", context.Request.Path.Value, context.Request.QueryString.Value);
+                    logger.LogWarning(ex, "Unexpected error during logging web response {Path}{Query}", context.Request.Path.Value, context.Request.QueryString.Value);
                 }
 
                 await responseBody.CopyToAsync(originalResponseBody);

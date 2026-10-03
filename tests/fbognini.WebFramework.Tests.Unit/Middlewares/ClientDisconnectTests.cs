@@ -1,4 +1,5 @@
 using fbognini.WebFramework.Middlewares;
+using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Http;
 
 namespace fbognini.WebFramework.Tests.Unit.Middlewares;
@@ -25,6 +26,14 @@ public class ClientDisconnectTests
         var context = new DefaultHttpContext();
 
         context.WasAbortedByClient(new TaskCanceledException("Timeout", new TimeoutException())).ShouldBeFalse();
+    }
+
+    [Fact]
+    public void WasAbortedByClient_IsTrueForAConnectionResetEvenBeforeTheTokenIsCancelled()
+    {
+        var context = new DefaultHttpContext();
+
+        context.WasAbortedByClient(new ConnectionResetException("The client has disconnected")).ShouldBeTrue();
     }
 
     [Fact]
